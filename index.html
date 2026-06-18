@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wakanda Shit (Basic Mode)</title>
+    <title>Cloud Digital Book</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+        // Your specific config
         const firebaseConfig = {
             apiKey: "AIzaSyAwktvktXaaRxFPX500kOBcvuUtOjRjz6M",
             authDomain: "wakanda-shit.firebaseapp.com",
@@ -18,7 +19,9 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        window.db = db; // Make db accessible to functions
+        
+        // Export to window for use in functions
+        window.db = db;
         window.doc = doc;
         window.getDoc = getDoc;
         window.setDoc = setDoc;
@@ -27,8 +30,7 @@
         body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
         .hidden { display: none; }
         .section { border: 1px solid #ccc; padding: 15px; margin-top: 10px; }
-        #edit-area { width: 100%; min-height: 200px; border: 1px solid #999; padding: 10px; overflow-y: auto; background-color: #fff; }
-        #text-display { white-space: pre-wrap; word-wrap: break-word; }
+        #edit-area { width: 100%; min-height: 200px; border: 1px solid #999; padding: 10px; background-color: #fff; }
     </style>
 </head>
 <body>
@@ -42,24 +44,24 @@
     </div>
 
     <div id="app-screen" class="hidden">
-        <h2 id="role-title"></h2>
-        <button onclick="logout()">Logout</button>
+        <h2 id="role-title">Digital Book</h2>
+        <button onclick="location.reload()">Logout</button>
+        
         <div id="editor-controls" class="hidden">
             <button onclick="addChapter()">+ Add Chapter</button>
-            <button onclick="changePassword()">Change Password</button>
         </div>
+        
         <h3>Chapters</h3>
         <ul id="chapter-list"></ul>
+        
         <div id="content-view" class="section hidden">
             <h2 id="chapter-title"></h2>
             <div id="text-display"></div>
             <div id="editor-tools" class="hidden">
                 <hr>
-                <button onclick="document.execCommand('bold')"><b>B</b></button>
-                <button onclick="document.execCommand('italic')"><i>I</i></button>
                 <div id="edit-area" contenteditable="true"></div>
                 <button onclick="saveContent()">Save Changes</button>
-                <button onclick="deleteChapter()" style="color: red;">Delete</button>
+                <button onclick="deleteChapter()" style="color: red;">Delete Chapter</button>
             </div>
         </div>
     </div>
@@ -75,12 +77,14 @@
             if (docSnap.exists()) {
                 bookData = docSnap.data();
             } else {
+                // Initial creation if DB is empty
                 await window.setDoc(docRef, bookData);
             }
 
             if (role === 'editor') {
                 const pass = document.getElementById('passInput').value;
                 if (pass !== bookData.password) { alert("Wrong Password!"); return; }
+                document.getElementById('editor-controls').classList.remove('hidden');
             }
             
             currentUser = role;
@@ -94,20 +98,21 @@
             list.innerHTML = "";
             bookData.chapters.forEach((ch, idx) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="#" onclick="viewChapter(${idx})">${ch.title}</a>`;
+                li.innerHTML = `<a href="#" onclick="viewChapter(${idx}); return false;">${ch.title}</a>`;
                 list.appendChild(li);
             });
         }
 
         function viewChapter(idx) {
+            window.currentIdx = idx;
             const ch = bookData.chapters[idx];
             document.getElementById('content-view').classList.remove('hidden');
             document.getElementById('chapter-title').innerText = ch.title;
             document.getElementById('text-display').innerHTML = ch.content;
+            
             if (currentUser === 'editor') {
                 document.getElementById('editor-tools').classList.remove('hidden');
                 document.getElementById('edit-area').innerHTML = ch.content;
-                window.currentIdx = idx;
             }
         }
 
@@ -115,24 +120,25 @@
             bookData.chapters[window.currentIdx].content = document.getElementById('edit-area').innerHTML;
             await window.setDoc(window.doc(window.db, "book", "data"), bookData);
             alert("Saved to Cloud!");
+            location.reload(); // Refresh to show changes
         }
 
         async function addChapter() {
             const title = prompt("Chapter Name:");
             if (title) {
-                bookData.chapters.push({ title, content: "" });
+                bookData.chapters.push({ title, content: "New chapter content..." });
                 await window.setDoc(window.doc(window.db, "book", "data"), bookData);
                 renderChapters();
             }
         }
 
         async function deleteChapter() {
-            bookData.chapters.splice(window.currentIdx, 1);
-            await window.setDoc(window.doc(window.db, "book", "data"), bookData);
-            location.reload();
+            if (confirm("Delete this chapter?")) {
+                bookData.chapters.splice(window.currentIdx, 1);
+                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
+                location.reload();
+            }
         }
-
-        function logout() { location.reload(); }
     </script>
 </body>
 </html>
