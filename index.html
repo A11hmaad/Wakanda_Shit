@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wakanda Shit</title>
+    <title>Digital Book Manager</title>
     <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    .hidden { display: none; }
-    .section { border: 1px solid #ccc; padding: 15px; margin-top: 10px; }
-    textarea { width: 100%; height: 200px; }
-    
-    /* Updated styles */
-    #text-display {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .hidden { display: none; }
+        .section { border: 1px solid #ccc; padding: 15px; margin-top: 10px; }
+        
+        #edit-area { 
+            width: 100%; min-height: 200px; border: 1px solid #999; padding: 10px; 
+            overflow-y: auto; background-color: #fff;
+        }
+        #text-display { 
+            white-space: pre-wrap; word-wrap: break-word; 
+        }
+        .toolbar { margin-bottom: 10px; }
+        .toolbar button { margin-right: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -29,6 +32,7 @@
     <div id="app-screen" class="hidden">
         <h2 id="role-title"></h2>
         <button onclick="logout()">Logout</button>
+        
         <div id="editor-controls" class="hidden">
             <button onclick="addChapter()">+ Add Chapter</button>
             <button onclick="changePassword()">Change Password</button>
@@ -40,9 +44,18 @@
         <div id="content-view" class="section hidden">
             <h2 id="chapter-title"></h2>
             <div id="text-display"></div>
+            
             <div id="editor-tools" class="hidden">
-                <textarea id="edit-area"></textarea>
+                <hr>
+                <div class="toolbar">
+                    <button onclick="format('bold')"><b>B</b></button>
+                    <button onclick="format('italic')"><i>I</i></button>
+                    <button onclick="format('underline')"><u>U</u></button>
+                </div>
+                <div id="edit-area" contenteditable="true"></div>
+                <br>
                 <button onclick="saveContent()">Save Changes</button>
+                <button onclick="deleteChapter()" style="color: red;">Delete Chapter</button>
             </div>
         </div>
     </div>
@@ -94,13 +107,17 @@
             
             if (currentUser === 'editor') {
                 document.getElementById('editor-tools').classList.remove('hidden');
-                document.getElementById('edit-area').value = ch.content;
+                document.getElementById('edit-area').innerHTML = ch.content;
             }
+        }
+
+        function format(cmd) {
+            document.execCommand(cmd, false, null);
         }
 
         function saveContent() {
             const data = JSON.parse(localStorage.getItem('bookData'));
-            data.chapters[currentChapterIndex].content = document.getElementById('edit-area').value;
+            data.chapters[currentChapterIndex].content = document.getElementById('edit-area').innerHTML;
             localStorage.setItem('bookData', JSON.stringify(data));
             viewChapter(currentChapterIndex);
             alert("Saved!");
@@ -113,6 +130,15 @@
                 data.chapters.push({ title: title, content: "" });
                 localStorage.setItem('bookData', JSON.stringify(data));
                 renderChapters();
+            }
+        }
+
+        function deleteChapter() {
+            if(confirm("Are you sure you want to delete this chapter?")) {
+                const data = JSON.parse(localStorage.getItem('bookData'));
+                data.chapters.splice(currentChapterIndex, 1);
+                localStorage.setItem('bookData', JSON.stringify(data));
+                location.reload(); 
             }
         }
 
