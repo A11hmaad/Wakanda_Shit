@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wakanda Shit</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .hidden { display: none; }
+        .section { border: 1px solid #ccc; padding: 15px; margin-top: 10px; }
+        textarea { width: 100%; height: 200px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h2>Select Role</h2>
+        <button onclick="login('viewer')">Enter as Viewer</button>
+        <hr>
+        <input type="password" id="passInput" placeholder="Editor Password">
+        <button onclick="login('editor')">Enter as Editor</button>
+    </div>
+
+    <div id="app-screen" class="hidden">
+        <h2 id="role-title"></h2>
+        <button onclick="logout()">Logout</button>
+        <div id="editor-controls" class="hidden">
+            <button onclick="addChapter()">+ Add Chapter</button>
+            <button onclick="changePassword()">Change Password</button>
+        </div>
+        
+        <h3>Chapters</h3>
+        <ul id="chapter-list"></ul>
+
+        <div id="content-view" class="section hidden">
+            <h2 id="chapter-title"></h2>
+            <div id="text-display"></div>
+            <div id="editor-tools" class="hidden">
+                <textarea id="edit-area"></textarea>
+                <button onclick="saveContent()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data Setup
+        if (!localStorage.getItem('bookData')) {
+            localStorage.setItem('bookData', JSON.stringify({
+                password: "HambaHamba",
+                chapters: [{ title: "Introduction", content: "Welcome to the book." }]
+            }));
+        }
+
+        let currentUser = null;
+        let currentChapterIndex = null;
+
+        function login(role) {
+            if (role === 'editor') {
+                const pass = document.getElementById('passInput').value;
+                const data = JSON.parse(localStorage.getItem('bookData'));
+                if (pass !== data.password) { alert("Wrong Password!"); return; }
+            }
+            currentUser = role;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('role-title').innerText = "Logged in as: " + role.toUpperCase();
+            if (role === 'editor') document.getElementById('editor-controls').classList.remove('hidden');
+            renderChapters();
+        }
+
+        function renderChapters() {
+            const data = JSON.parse(localStorage.getItem('bookData'));
+            const list = document.getElementById('chapter-list');
+            list.innerHTML = "";
+            data.chapters.forEach((ch, idx) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="#" onclick="viewChapter(${idx})">${ch.title}</a>`;
+                list.appendChild(li);
+            });
+        }
+
+        function viewChapter(idx) {
+            currentChapterIndex = idx;
+            const data = JSON.parse(localStorage.getItem('bookData'));
+            const ch = data.chapters[idx];
+            document.getElementById('content-view').classList.remove('hidden');
+            document.getElementById('chapter-title').innerText = ch.title;
+            document.getElementById('text-display').innerHTML = ch.content;
+            
+            if (currentUser === 'editor') {
+                document.getElementById('editor-tools').classList.remove('hidden');
+                document.getElementById('edit-area').value = ch.content;
+            }
+        }
+
+        function saveContent() {
+            const data = JSON.parse(localStorage.getItem('bookData'));
+            data.chapters[currentChapterIndex].content = document.getElementById('edit-area').value;
+            localStorage.setItem('bookData', JSON.stringify(data));
+            viewChapter(currentChapterIndex);
+            alert("Saved!");
+        }
+
+        function addChapter() {
+            const title = prompt("Enter Chapter Name:");
+            if (title) {
+                const data = JSON.parse(localStorage.getItem('bookData'));
+                data.chapters.push({ title: title, content: "" });
+                localStorage.setItem('bookData', JSON.stringify(data));
+                renderChapters();
+            }
+        }
+
+        function changePassword() {
+            const newPass = prompt("Enter new password:");
+            if (newPass) {
+                const data = JSON.parse(localStorage.getItem('bookData'));
+                data.password = newPass;
+                localStorage.setItem('bookData', JSON.stringify(data));
+                alert("Password Updated.");
+            }
+        }
+
+        function logout() { location.reload(); }
+    </script>
+</body>
+</html>
