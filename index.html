@@ -90,7 +90,6 @@
             renderChapters();
         }
 
-        // NEW PASSWORD FUNCTION
         async function changePassword() {
             const newPass = prompt("Enter new Editor password:");
             if (newPass) {
@@ -102,16 +101,51 @@
 
         function renderChapters() {
             const list = document.getElementById('chapter-list');
-            list.innerHTML = "";
+            list.innerHTML = ""; // Clear existing list
             bookData.chapters.forEach((ch, idx) => {
                 const li = document.createElement('li');
+                // Use a proper link to trigger the view function
                 li.innerHTML = `<a href="#" onclick="viewChapter(${idx}); return false;">${ch.title}</a>`;
-                appendChild(li); // Fixed potential scope issue
+                list.appendChild(li); // Fixed: This now appends to the 'list' element
             });
         }
-        
-        // ... (rest of your existing functions: viewChapter, saveContent, addChapter, deleteChapter)
-        // Ensure you keep your existing viewChapter, saveContent, etc. exactly as they were.
+
+        function viewChapter(idx) {
+            window.currentIdx = idx;
+            const ch = bookData.chapters[idx];
+            document.getElementById('content-view').classList.remove('hidden');
+            document.getElementById('chapter-title').innerText = ch.title;
+            document.getElementById('text-display').innerHTML = ch.content;
+            
+            if (currentUser === 'editor') {
+                document.getElementById('editor-tools').classList.remove('hidden');
+                document.getElementById('edit-area').innerHTML = ch.content;
+            }
+        }
+
+        async function saveContent() {
+            bookData.chapters[window.currentIdx].content = document.getElementById('edit-area').innerHTML;
+            await window.setDoc(window.doc(window.db, "book", "data"), bookData);
+            alert("Saved to Cloud!");
+            location.reload(); 
+        }
+
+        async function addChapter() {
+            const title = prompt("Chapter Name:");
+            if (title) {
+                bookData.chapters.push({ title, content: "New chapter content..." });
+                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
+                renderChapters();
+            }
+        }
+
+        async function deleteChapter() {
+            if (confirm("Delete this chapter?")) {
+                bookData.chapters.splice(window.currentIdx, 1);
+                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
+                location.reload();
+            }
+        }
     </script>
 </body>
 </html>
