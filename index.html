@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wakanda Shit </title>
+    <title>Wakanda Shit</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
@@ -57,9 +57,16 @@
             <div id="text-display"></div>
             <div id="editor-tools" class="hidden">
                 <hr>
+                <div style="margin-bottom: 10px;">
+                    <button type="button" onclick="document.execCommand('bold', false, null)"><b>B</b></button>
+                    <button type="button" onclick="document.execCommand('italic', false, null)"><i>I</i></button>
+                    <button type="button" onclick="document.execCommand('underline', false, null)"><u>U</u></button>
+                </div>
                 <div id="edit-area" contenteditable="true"></div>
-                <button onclick="saveContent()">Save Changes</button>
-                <button onclick="deleteChapter()" style="color: red;">Delete Chapter</button>
+                <div style="margin-top: 10px;">
+                    <button onclick="saveContent()">Save Changes</button>
+                    <button onclick="deleteChapter()" style="color: red;">Delete Chapter</button>
+                </div>
             </div>
         </div>
     </div>
@@ -101,12 +108,11 @@
 
         function renderChapters() {
             const list = document.getElementById('chapter-list');
-            list.innerHTML = ""; // Clear existing list
+            list.innerHTML = "";
             bookData.chapters.forEach((ch, idx) => {
                 const li = document.createElement('li');
-                // Use a proper link to trigger the view function
                 li.innerHTML = `<a href="#" onclick="viewChapter(${idx}); return false;">${ch.title}</a>`;
-                list.appendChild(li); // Fixed: This now appends to the 'list' element
+                list.appendChild(li);
             });
         }
 
