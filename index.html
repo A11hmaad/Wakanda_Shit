@@ -2,14 +2,662 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Wakanda Shit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Writer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2c2c2c;
+            --secondary: #8b7355;
+            --light: #f5f3f0;
+            --accent: #d4a574;
+            --text: #333;
+            --border: #e0dcd8;
+        }
+
+        body {
+            font-family: 'Georgia', 'Garamond', serif;
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--light) 0%, #fafaf8 100%);
+        }
+
+        .login-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 2px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 380px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .login-container h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
+        .login-subtitle {
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .login-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .login-buttons button {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+
+        .login-buttons button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .login-buttons button:hover {
+            border-color: var(--secondary);
+        }
+
+        .password-input-group {
+            display: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .password-input-group.show {
+            display: block;
+        }
+
+        .password-input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .password-input-group input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .login-button:hover {
+            background: var(--secondary);
+        }
+
+        .error-message {
+            color: #c53030;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Main App */
+        .app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app.active {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            background: var(--accent);
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 2px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .chapters-list {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .chapter-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+
+        .chapter-item:hover {
+            background: #f9f7f5;
+        }
+
+        .chapter-item.active {
+            background: #f0ede8;
+            border-left-color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .chapter-number {
+            color: #999;
+            font-size: 0.8rem;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .editor-controls {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: none;
+            gap: 0.5rem;
+            flex-direction: column;
+        }
+
+        .editor-controls.show {
+            display: flex;
+        }
+
+        .editor-button {
+            padding: 0.65rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .editor-button:hover {
+            background: var(--secondary);
+        }
+
+        .editor-button.secondary {
+            background: #e8e4e0;
+            color: var(--primary);
+        }
+
+        .editor-button.secondary:hover {
+            background: #ddd8d3;
+        }
+
+        .editor-button.danger {
+            background: #c53030;
+        }
+
+        .editor-button.danger:hover {
+            background: #9b2c2c;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            background: white;
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+        }
+
+        .chapter-meta {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .viewer-controls {
+            display: none;
+            padding: 1rem 2rem;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .viewer-controls.show {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .control-group select {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            cursor: pointer;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background: var(--light);
+        }
+
+        .editor-toolbar {
+            display: none;
+            padding: 0.75rem 1rem;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .editor-toolbar.show {
+            display: flex;
+        }
+
+        .toolbar-button {
+            padding: 0.4rem 0.7rem;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            border-radius: 2px;
+            font-size: 0.85rem;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: all 0.2s;
+            min-width: 35px;
+        }
+
+        .toolbar-button:hover {
+            background: #f9f7f5;
+            border-color: var(--secondary);
+        }
+
+        .toolbar-button.active {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+
+        .editor-textarea {
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            border: none;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            resize: none;
+            background: white;
+            color: var(--text);
+        }
+
+        .editor-textarea:focus {
+            outline: none;
+        }
+
+        .viewer-content {
+            background: white;
+            padding: 3rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .viewer-content h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem;
+            color: var(--primary);
+        }
+
+        .viewer-content p {
+            margin-bottom: 1.2rem;
+        }
+
+        .viewer-content strong {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .viewer-content em {
+            font-style: italic;
+        }
+
+        .viewer-content u {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 2rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .settings-panel {
+            display: none;
+            padding: 2rem;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .settings-panel.show {
+            display: block;
+        }
+
+        .settings-group {
+            margin-bottom: 2rem;
+        }
+
+        .settings-group h3 {
+            font-size: 1rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .settings-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-group button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+        }
+
+        .settings-group button:hover {
+            background: var(--secondary);
+        }
+
+        .success-message {
+            color: #22863a;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .logout-button {
+            margin-top: auto;
+            padding: 0.75rem 1rem;
+            background: #e8e4e0;
+            color: var(--primary);
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .logout-button:hover {
+            background: #ddd8d3;
+        }
+
+        .chapter-number-input {
+            width: 80px;
+            padding: 0.4rem;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .app {
+                flex-direction: column;
+            }
+
+            .main-content {
+                height: auto;
+            }
+
+            .content-area {
+                min-height: 50vh;
+            }
+
+            .viewer-controls {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .chapters-list {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0 0.5rem;
+            }
+
+            .chapter-item {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <h1>Your Book</h1>
+            <p class="login-subtitle">Enter as viewer or editor</p>
+            
+            <div class="login-buttons">
+                <button class="login-mode-btn active" data-mode="viewer">Viewer</button>
+                <button class="login-mode-btn" data-mode="editor">Editor</button>
+            </div>
+
+            <div class="password-input-group" id="passwordGroup">
+                <input type="password" id="passwordInput" placeholder="Enter password">
+                <button class="login-button" onclick="handleLogin()">Enter as Editor</button>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <button class="login-button" id="viewerButton" onclick="handleViewerLogin()">Enter as Viewer</button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app" id="mainApp">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Your Book</h2>
+                <span class="mode-badge" id="modeBadge">Viewer</span>
+            </div>
+
+            <div class="chapters-list" id="chaptersList"></div>
+
+            <div class="editor-controls" id="editorControls">
+                <button class="editor-button" onclick="showAddChapterDialog()">+ New Chapter</button>
+                <button class="editor-button secondary" onclick="showSettings()">Settings</button>
+                <button class="logout-button" onclick="logout()">Logout</button>
+            </div>
+
+            <button class="logout-button" id="viewerLogout" onclick="logout()" style="display: none; margin: 1rem;">Logout</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Content Header -->
+            <div class="content-header" id="contentHeader">
+                <h1 id="chapterTitle">Select a chapter to read</h1>
+                <p class="chapter-meta" id="chapterMeta"></p>
+            </div>
+
+            <!-- Viewer Controls -->
+            <div class="viewer-controls" id="viewerControls">
+                <div class="control-group">
+                    <label for="fontSelect">Font:</label>
+                    <select id="fontSelect" onchange="changeFontFamily()">
+                        <option value="Georgia">Georgia</option>
+                        <option value="Garamond">Garamond</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Cambria">Cambria</option>
+                        <option value="Constantia">Constantia</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="sizeSelect">Size:</label>
+                    <select id="sizeSelect" onchange="changeFontSize()">
+                        <option value="14">Small (14px)</option>
+                        <option value="16" selected>Normal (16px)</option>
+                        <option value="18">Large (18px)</option>
+                        <option value="20">Extra Large (20px)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Editor Toolbar -->
+            <div class="editor-toolbar" id="editorToolbar">
+                <button class="toolbar-button" onclick="formatText('bold')" title="Bold"><strong>B</strong></button>
+                <button class="toolbar-button" onclick="formatText('italic')" title="Italic"><em>I</em></button>
+                <button class="toolbar-button" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                <span style="flex-grow: 1;"></span>
+                <button class="toolbar-button editor-button danger" style="margin-left: auto;" onclick="deleteChapter()" title="Delete Chapter">Delete</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area" id="contentArea">
+                <div class="empty-state">
+                    <h3>No chapter selected</h3>
+                    <p>Select a chapter from the list to start reading</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel (hidden overlay) -->
+    <div class="settings-panel" id="settingsPanel">
+        <h2 style="margin-bottom: 2rem; color: var(--primary);">Settings</h2>
+        <div class="settings-group">
+            <h3>Change Password</h3>
+            <input type="password" id="newPasswordInput" placeholder="New password">
+            <button onclick="changePassword()">Update Password</button>
+            <div class="success-message" id="passwordSuccessMessage">Password updated successfully!</div>
+            <div class="error-message" id="passwordErrorMessage"></div>
+        </div>
+        <button class="editor-button secondary" onclick="hideSettings()" style="margin-top: 2rem; width: 100%;">Close</button>
+    </div>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAwktvktXaaRxFPX500kOBcvuUtOjRjz6M",
             authDomain: "wakanda-shit.firebaseapp.com",
+            databaseURL: "https://wakanda-shit-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "wakanda-shit",
             storageBucket: "wakanda-shit.firebasestorage.app",
             messagingSenderId: "491323769717",
@@ -17,141 +665,316 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        window.db = db;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.setDoc = setDoc;
-    </script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        .hidden { display: none; }
-        .section { border: 1px solid #ccc; padding: 15px; margin-top: 10px; }
-        #edit-area { width: 100%; min-height: 200px; border: 1px solid #999; padding: 10px; background-color: #fff; }
-    </style>
-</head>
-<body>
+        const database = getDatabase(app);
 
-    <div id="login-screen">
-        <h2>Select Role</h2>
-        <button onclick="login('viewer')">Enter as Viewer</button>
-        <hr>
-        <input type="password" id="passInput" placeholder="Editor Password">
-        <button onclick="login('editor')">Enter as Editor</button>
-    </div>
+        // Global state
+        let currentMode = 'viewer';
+        let currentPassword = 'HambaHamba';
+        let chapters = [];
+        let currentChapterId = null;
+        let editorDirty = false;
 
-    <div id="app-screen" class="hidden">
-        <h2 id="role-title">Wakanda Shit</h2>
-        <button onclick="location.reload()">Logout</button>
-        
-        <div id="editor-controls" class="hidden">
-            <button onclick="addChapter()">+ Add Chapter</button>
-            <button onclick="changePassword()">Change Password</button>
-        </div>
-        
-        <h3>Chapters</h3>
-        <ul id="chapter-list"></ul>
-        
-        <div id="content-view" class="section hidden">
-            <h2 id="chapter-title"></h2>
-            <div id="text-display"></div>
-            <div id="editor-tools" class="hidden">
-                <hr>
-                <div style="margin-bottom: 10px;">
-                    <button type="button" onclick="document.execCommand('bold', false, null)"><b>B</b></button>
-                    <button type="button" onclick="document.execCommand('italic', false, null)"><i>I</i></button>
-                    <button type="button" onclick="document.execCommand('underline', false, null)"><u>U</u></button>
-                </div>
-                <div id="edit-area" contenteditable="true"></div>
-                <div style="margin-top: 10px;">
-                    <button onclick="saveContent()">Save Changes</button>
-                    <button onclick="deleteChapter()" style="color: red;">Delete Chapter</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        // Login Mode Selection
+        document.querySelectorAll('.login-mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.login-mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const mode = this.dataset.mode;
+                const passwordGroup = document.getElementById('passwordGroup');
+                const viewerButton = document.getElementById('viewerButton');
+                
+                if (mode === 'editor') {
+                    passwordGroup.classList.add('show');
+                    viewerButton.style.display = 'none';
+                } else {
+                    passwordGroup.classList.remove('show');
+                    viewerButton.style.display = 'block';
+                }
+            });
+        });
 
-    <script>
-        let currentUser = null;
-        let bookData = { password: "HambaHamba", chapters: [] };
+        // Viewer Login
+        window.handleViewerLogin = function() {
+            currentMode = 'viewer';
+            loginAsMode();
+        };
 
-        async function login(role) {
-            const docRef = window.doc(window.db, "book", "data");
-            const docSnap = await window.getDoc(docRef);
+        // Editor Login
+        window.handleLogin = function() {
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMessage');
             
-            if (docSnap.exists()) {
-                bookData = docSnap.data();
+            if (password === currentPassword) {
+                currentMode = 'editor';
+                loginAsMode();
             } else {
-                await window.setDoc(docRef, bookData);
+                errorMsg.textContent = 'Incorrect password';
+                errorMsg.classList.add('show');
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
             }
+        };
 
-            if (role === 'editor') {
-                const pass = document.getElementById('passInput').value;
-                if (pass !== bookData.password) { alert("Wrong Password!"); return; }
-                document.getElementById('editor-controls').classList.remove('hidden');
+        function loginAsMode() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+            
+            document.getElementById('modeBadge').textContent = currentMode === 'editor' ? 'Editor' : 'Viewer';
+            document.getElementById('modeBadge').style.background = currentMode === 'editor' ? 'var(--secondary)' : 'var(--accent)';
+            
+            // Show/hide editor controls
+            const editorControls = document.getElementById('editorControls');
+            const viewerControls = document.getElementById('viewerControls');
+            const viewerLogout = document.getElementById('viewerLogout');
+            const editorToolbar = document.getElementById('editorToolbar');
+            
+            if (currentMode === 'editor') {
+                editorControls.classList.add('show');
+                viewerControls.classList.remove('show');
+                viewerLogout.style.display = 'none';
+                editorToolbar.classList.add('show');
+            } else {
+                editorControls.classList.remove('show');
+                viewerControls.classList.add('show');
+                viewerLogout.style.display = 'block';
+                editorToolbar.classList.remove('show');
             }
             
-            currentUser = role;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            renderChapters();
+            loadChapters();
         }
 
-        async function changePassword() {
-            const newPass = prompt("Enter new Editor password:");
-            if (newPass) {
-                bookData.password = newPass;
-                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
-                alert("Password updated successfully!");
-            }
-        }
-
-        function renderChapters() {
-            const list = document.getElementById('chapter-list');
-            list.innerHTML = "";
-            bookData.chapters.forEach((ch, idx) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="#" onclick="viewChapter(${idx}); return false;">${ch.title}</a>`;
-                list.appendChild(li);
+        // Load chapters from Firebase
+        function loadChapters() {
+            const chaptersRef = ref(database, 'chapters');
+            onValue(chaptersRef, (snapshot) => {
+                chapters = [];
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    Object.entries(data).forEach(([id, chapter]) => {
+                        chapters.push({ id, ...chapter });
+                    });
+                    chapters.sort((a, b) => (a.order || 0) - (b.order || 0));
+                }
+                renderChaptersList();
+                if (currentChapterId && !chapters.find(c => c.id === currentChapterId)) {
+                    currentChapterId = null;
+                    showEmptyState();
+                }
             });
         }
 
-        function viewChapter(idx) {
-            window.currentIdx = idx;
-            const ch = bookData.chapters[idx];
-            document.getElementById('content-view').classList.remove('hidden');
-            document.getElementById('chapter-title').innerText = ch.title;
-            document.getElementById('text-display').innerHTML = ch.content;
+        function renderChaptersList() {
+            const list = document.getElementById('chaptersList');
+            list.innerHTML = '';
             
-            if (currentUser === 'editor') {
-                document.getElementById('editor-tools').classList.remove('hidden');
-                document.getElementById('edit-area').innerHTML = ch.content;
+            chapters.forEach(chapter => {
+                const item = document.createElement('div');
+                item.className = 'chapter-item' + (chapter.id === currentChapterId ? ' active' : '');
+                item.innerHTML = `
+                    <span class="chapter-number">Chapter ${chapter.order + 1}</span>
+                    <span>${chapter.title}</span>
+                `;
+                item.onclick = () => selectChapter(chapter.id);
+                list.appendChild(item);
+            });
+        }
+
+        function selectChapter(id) {
+            if (currentMode === 'editor' && editorDirty) {
+                if (!confirm('You have unsaved changes. Discard them?')) return;
+                editorDirty = false;
+            }
+            
+            currentChapterId = id;
+            renderChaptersList();
+            
+            const chapter = chapters.find(c => c.id === id);
+            if (!chapter) return;
+            
+            document.getElementById('chapterTitle').textContent = chapter.title;
+            document.getElementById('chapterMeta').textContent = `Chapter ${chapter.order + 1}`;
+            
+            if (currentMode === 'editor') {
+                showEditorForChapter(chapter);
+            } else {
+                showViewerForChapter(chapter);
             }
         }
 
-        async function saveContent() {
-            bookData.chapters[window.currentIdx].content = document.getElementById('edit-area').innerHTML;
-            await window.setDoc(window.doc(window.db, "book", "data"), bookData);
-            alert("Saved to Cloud!");
-            location.reload(); 
+        function showEditorForChapter(chapter) {
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = `
+                <textarea class="editor-textarea" id="chapterTextarea" placeholder="Start writing...">${chapter.content || ''}</textarea>
+            `;
+            
+            const textarea = document.getElementById('chapterTextarea');
+            textarea.addEventListener('input', () => {
+                editorDirty = true;
+                saveChapterContent();
+            });
         }
 
-        async function addChapter() {
-            const title = prompt("Chapter Name:");
-            if (title) {
-                bookData.chapters.push({ title, content: "New chapter content..." });
-                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
-                renderChapters();
-            }
+        function saveChapterContent() {
+            if (!currentChapterId) return;
+            const textarea = document.getElementById('chapterTextarea');
+            if (!textarea) return;
+            
+            const chaptersRef = ref(database, `chapters/${currentChapterId}`);
+            get(chaptersRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    set(chaptersRef, {
+                        ...snapshot.val(),
+                        content: textarea.value
+                    });
+                }
+            });
         }
 
-        async function deleteChapter() {
-            if (confirm("Delete this chapter?")) {
-                bookData.chapters.splice(window.currentIdx, 1);
-                await window.setDoc(window.doc(window.db, "book", "data"), bookData);
-                location.reload();
-            }
+        function showViewerForChapter(chapter) {
+            const contentArea = document.getElementById('contentArea');
+            contentArea.innerHTML = `<div class="viewer-content">${chapter.content || ''}</div>`;
         }
+
+        function showEmptyState() {
+            document.getElementById('contentArea').innerHTML = `
+                <div class="empty-state">
+                    <h3>${currentMode === 'editor' ? 'No chapters yet' : 'No chapters to read'}</h3>
+                    <p>${currentMode === 'editor' ? 'Create your first chapter to get started' : 'Check back later'}</p>
+                </div>
+            `;
+        }
+
+        // Editor functions
+        window.showAddChapterDialog = function() {
+            const title = prompt('Chapter Title:');
+            if (!title) return;
+            
+            const newId = 'chapter_' + Date.now();
+            const newOrder = chapters.length;
+            
+            set(ref(database, `chapters/${newId}`), {
+                title: title,
+                content: '',
+                order: newOrder,
+                createdAt: new Date().toISOString()
+            });
+        };
+
+        window.deleteChapter = function() {
+            if (!currentChapterId) return;
+            if (!confirm('Delete this chapter?')) return;
+            
+            remove(ref(database, `chapters/${currentChapterId}`));
+            currentChapterId = null;
+            showEmptyState();
+        };
+
+        window.formatText = function(format) {
+            const textarea = document.getElementById('chapterTextarea');
+            if (!textarea) return;
+            
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.substring(start, end);
+            
+            if (!selected) return;
+            
+            let formatted = selected;
+            if (format === 'bold') formatted = `**${selected}**`;
+            if (format === 'italic') formatted = `*${selected}*`;
+            if (format === 'underline') formatted = `__${selected}__`;
+            
+            textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + formatted.length;
+            
+            editorDirty = true;
+            saveChapterContent();
+        };
+
+        // Viewer controls
+        window.changeFontFamily = function() {
+            const font = document.getElementById('fontSelect').value;
+            const content = document.querySelector('.viewer-content');
+            if (content) content.style.fontFamily = font;
+        };
+
+        window.changeFontSize = function() {
+            const size = document.getElementById('sizeSelect').value;
+            const content = document.querySelector('.viewer-content');
+            if (content) content.style.fontSize = size + 'px';
+        };
+
+        // Settings
+        window.showSettings = function() {
+            document.getElementById('settingsPanel').classList.add('show');
+            document.getElementById('mainApp').style.opacity = '0.5';
+        };
+
+        window.hideSettings = function() {
+            document.getElementById('settingsPanel').classList.remove('show');
+            document.getElementById('mainApp').style.opacity = '1';
+        };
+
+        window.changePassword = function() {
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const errorMsg = document.getElementById('passwordErrorMessage');
+            const successMsg = document.getElementById('passwordSuccessMessage');
+            
+            if (!newPassword) {
+                errorMsg.textContent = 'Enter a new password';
+                errorMsg.classList.add('show');
+                return;
+            }
+            
+            currentPassword = newPassword;
+            document.getElementById('newPasswordInput').value = '';
+            errorMsg.classList.remove('show');
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+        };
+
+        // Logout
+        window.logout = function() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordGroup').classList.remove('show');
+            document.getElementById('settingsPanel').classList.remove('show');
+            document.getElementById('mainApp').style.opacity = '1';
+            
+            document.querySelectorAll('.login-mode-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.login-mode-btn[data-mode="viewer"]').classList.add('active');
+            document.getElementById('viewerButton').style.display = 'block';
+            
+            currentChapterId = null;
+            editorDirty = false;
+        };
+
+        // Render formatted text (convert markdown to HTML for viewer)
+        function renderFormattedContent(content) {
+            let html = content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/__(.+?)__/g, '<u>$1</u>')
+                .replace(/\n/g, '<br>');
+            return html;
+        }
+
+        // Override viewer content rendering
+        const originalShowViewer = showViewerForChapter;
+        window.showViewerForChapter = function(chapter) {
+            const contentArea = document.getElementById('contentArea');
+            const formattedContent = renderFormattedContent(chapter.content || '');
+            contentArea.innerHTML = `<div class="viewer-content">${formattedContent}</div>`;
+            
+            // Apply saved font and size
+            const content = contentArea.querySelector('.viewer-content');
+            const font = document.getElementById('fontSelect')?.value || 'Georgia';
+            const size = document.getElementById('sizeSelect')?.value || '16';
+            content.style.fontFamily = font;
+            content.style.fontSize = size + 'px';
+        };
     </script>
 </body>
 </html>
