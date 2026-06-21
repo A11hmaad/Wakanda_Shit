@@ -956,6 +956,9 @@ function selectChapter(key, isEditor) {
     area.style.display = '';
     document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
     document.getElementById('reader-body').innerHTML = ch.content || '<em style="color:var(--muted)">This chapter has no content yet.</em>';
+    // Re-apply current font/size preferences over any baked-in inline styles
+    applyReaderFont();
+    applyReaderSize();
   }
 
   renderChapterLists(); // re-highlight active
@@ -1080,16 +1083,22 @@ async function saveBookSettings() {
 /* ── Reader controls ── */
 function applyReaderFont() {
   const f = document.getElementById('reader-font-select').value;
-  document.getElementById('reader-chapter-title').style.fontFamily = f;
-  document.getElementById('reader-body').style.fontFamily = f;
+  const body = document.getElementById('reader-body');
+  const title = document.getElementById('reader-chapter-title');
+  body.style.fontFamily = f;
+  title.style.fontFamily = f;
+  // Override any inline font-family on child elements saved by the editor
+  body.querySelectorAll('*').forEach(el => { el.style.fontFamily = f; });
 }
 
 function applyReaderSize() {
-  const s = document.getElementById('reader-size-range').value;
-  const px = s + 'px';
-  document.getElementById('reader-body').style.fontSize = px;
+  const s = parseInt(document.getElementById('reader-size-range').value);
+  const body = document.getElementById('reader-body');
+  body.style.fontSize = s + 'px';
   document.getElementById('reader-chapter-title').style.fontSize = (s * 1.8) + 'px';
-  document.getElementById('reader-size-label').textContent = px;
+  document.getElementById('reader-size-label').textContent = s + 'px';
+  // Override any inline font-size on child elements saved by the editor
+  body.querySelectorAll('*').forEach(el => { el.style.fontSize = s + 'px'; });
 }
 
 /* ── Drawer (hamburger sidebar) ── */
