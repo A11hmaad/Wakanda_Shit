@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The Book</title>
+<title>The Tapestry</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,7 +11,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
 <style>
   :root {
@@ -792,27 +791,26 @@ const firebaseConfig = {
   appId: "1:491323769717:web:825b6044e43e672404493c"
 };
 firebase.initializeApp(firebaseConfig);
-const db      = firebase.database();
-const storage = firebase.storage();
+const db = firebase.database();
 
 /* ── State ── */
 let chapters = {};
 let currentKey = null;
 let editorMode = false;
 let storedPassword = "HambaHamba";
-let bookMeta = { title: "The Book", author: "", intro: "", coverUrl: "" };
-let pendingCoverFile = null;   // file chosen but not yet saved
+let bookMeta = { title: "The Tapestry", author: "", intro: "", coverBase64: "" };
+let pendingCoverFile = null;
 
 /* ── Bootstrap ── */
 async function bootstrap() {
   const metaSnap = await db.ref('meta').get();
   if (metaSnap.exists()) {
     const m = metaSnap.val();
-    if (m.title)    bookMeta.title    = m.title;
-    if (m.author)   bookMeta.author   = m.author;
-    if (m.intro)    bookMeta.intro    = m.intro;
-    if (m.coverUrl) bookMeta.coverUrl = m.coverUrl;
-    if (m.password) storedPassword    = m.password;
+    if (m.title)        bookMeta.title       = m.title;
+    if (m.author)       bookMeta.author      = m.author;
+    if (m.intro)        bookMeta.intro       = m.intro;
+    if (m.coverBase64)  bookMeta.coverBase64 = m.coverBase64;
+    if (m.password)     storedPassword       = m.password;
   }
   applyBookMeta();
 
@@ -824,7 +822,7 @@ async function bootstrap() {
 }
 
 function applyBookMeta() {
-  document.title = bookMeta.title || 'The Book';
+  document.title = bookMeta.title || 'The Tapestry';
   document.getElementById('book-title-display').textContent = bookMeta.title;
   document.getElementById('book-author-display').textContent = bookMeta.author;
   document.getElementById('editor-book-title').textContent   = bookMeta.title;
@@ -888,8 +886,8 @@ function renderHomepage() {
 
   // Cover
   const coverWrap = document.getElementById('rh-cover-wrap');
-  if (bookMeta.coverUrl) {
-    coverWrap.innerHTML = `<img class="rh-cover" src="${bookMeta.coverUrl}" alt="Cover" />`;
+  if (bookMeta.coverBase64) {
+    coverWrap.innerHTML = `<img class="rh-cover" src="${bookMeta.coverBase64}" alt="Cover" />`;
   } else {
     coverWrap.innerHTML = '';
   }
@@ -996,8 +994,10 @@ function selectChapter(key, isEditor) {
     applyReaderSize();
     updateChapterNav();
 
-    // Scroll to top of reading area
-    document.getElementById('reader-scroll').scrollTop = 0;
+    // Scroll to top after DOM paints
+    requestAnimationFrame(() => {
+      document.getElementById('reader-scroll').scrollTop = 0;
+    });
   }
 
   renderChapterLists();
@@ -1138,8 +1138,8 @@ function openBookSettings() {
 
   // Show current cover if any
   const curWrap = document.getElementById('cover-current-wrap');
-  if (bookMeta.coverUrl) {
-    document.getElementById('cover-current-img').src = bookMeta.coverUrl;
+  if (bookMeta.coverBase64) {
+    document.getElementById('cover-current-img').src = bookMeta.coverBase64;
     curWrap.style.display = '';
   } else {
     curWrap.style.display = 'none';
@@ -1163,12 +1163,8 @@ function previewCover(evt) {
 
 async function removeCover() {
   if (!confirm('Remove the current cover image?')) return;
-  // Delete from storage if it's a Firebase URL
-  if (bookMeta.coverUrl && bookMeta.coverUrl.includes('firebasestorage')) {
-    try { await storage.refFromURL(bookMeta.coverUrl).delete(); } catch(_) {}
-  }
-  bookMeta.coverUrl = '';
-  await db.ref('meta/coverUrl').set('');
+  bookMeta.coverBase64 = '';
+  await db.ref('meta/coverBase64').set('');
   document.getElementById('cover-current-wrap').style.display = 'none';
   document.getElementById('cover-current-img').src = '';
   applyBookMeta();
@@ -1178,37 +1174,45 @@ async function saveBookSettings() {
   const err = document.getElementById('bs-error');
   err.textContent = 'Saving…';
 
-  bookMeta.title  = document.getElementById('bs-title').value.trim()  || 'The Book';
+  bookMeta.title  = document.getElementById('bs-title').value.trim()  || 'The Tapestry';
   bookMeta.author = document.getElementById('bs-author').value.trim();
   bookMeta.intro  = document.getElementById('bs-intro').value.trim();
 
-  // Upload new cover if chosen
+  // Convert new cover to Base64 if chosen
   if (pendingCoverFile) {
     try {
-      // Remove old cover first
-      if (bookMeta.coverUrl && bookMeta.coverUrl.includes('firebasestorage')) {
-        try { await storage.refFromURL(bookMeta.coverUrl).delete(); } catch(_) {}
-      }
-      const ref = storage.ref('cover/' + pendingCoverFile.name + '_' + Date.now());
-      await ref.put(pendingCoverFile);
-      bookMeta.coverUrl = await ref.getDownloadURL();
+      bookMeta.coverBase64 = await fileToBase64(pendingCoverFile);
       pendingCoverFile = null;
-    } catch(uploadErr) {
-      err.textContent = 'Cover upload failed: ' + uploadErr.message;
+    } catch(e) {
+      err.textContent = 'Could not read image file.';
       return;
     }
   }
 
-  await db.ref('meta').update({
-    title:    bookMeta.title,
-    author:   bookMeta.author,
-    intro:    bookMeta.intro,
-    coverUrl: bookMeta.coverUrl
-  });
+  try {
+    await db.ref('meta').update({
+      title:       bookMeta.title,
+      author:      bookMeta.author,
+      intro:       bookMeta.intro,
+      coverBase64: bookMeta.coverBase64
+    });
+  } catch(e) {
+    err.textContent = 'Save failed: ' + e.message;
+    return;
+  }
 
   applyBookMeta();
   err.textContent = '';
   closeModal('modal-book-settings');
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('File read error'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ── Reader font / size ── */
@@ -1216,18 +1220,24 @@ function applyReaderFont() {
   const f = document.getElementById('reader-font-select').value;
   const body  = document.getElementById('reader-body');
   const title = document.getElementById('reader-chapter-title');
+  const intro = document.getElementById('rh-intro-display');
   body.style.fontFamily  = f;
   title.style.fontFamily = f;
+  intro.style.fontFamily = f;
   body.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
+  intro.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
 }
 
 function applyReaderSize() {
   const s    = parseInt(document.getElementById('reader-size-range').value);
-  const body = document.getElementById('reader-body');
-  body.style.fontSize = s + 'px';
+  const body  = document.getElementById('reader-body');
+  const intro = document.getElementById('rh-intro-display');
+  body.style.fontSize  = s + 'px';
+  intro.style.fontSize = s + 'px';
   document.getElementById('reader-chapter-title').style.fontSize = (s * 1.8) + 'px';
   document.getElementById('reader-size-label').textContent = s + 'px';
   body.querySelectorAll('*').forEach(el => el.style.fontSize = s + 'px');
+  intro.querySelectorAll('*').forEach(el => el.style.fontSize = s + 'px');
 }
 
 /* ── Drawer ── */
