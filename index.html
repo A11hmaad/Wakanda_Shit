@@ -204,18 +204,63 @@
     display: flex;
     flex: 1;
     overflow: hidden;
+    position: relative;
   }
 
-  /* Sidebar */
-  .sidebar {
-    width: 260px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--rule);
-    overflow-y: auto;
+  /* ── HAMBURGER BUTTON ── */
+  .hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem 0.4rem;
     display: flex;
     flex-direction: column;
-    background: var(--ui-bg);
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+    color: var(--muted);
+    transition: color 0.15s;
+    flex-shrink: 0;
   }
+  .hamburger-btn:hover { color: var(--accent); }
+  .hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .hamburger-btn.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+  .hamburger-btn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ── DRAWER OVERLAY (backdrop) ── */
+  .drawer-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,23,20,0.35);
+    z-index: 40;
+  }
+  .drawer-backdrop.open { display: block; }
+
+  /* ── SIDEBAR DRAWER ── */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 50;
+    background: var(--ui-bg);
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    overflow-y: auto;
+  }
+  .sidebar.open { transform: translateX(0); }
 
   .sidebar-header {
     padding: 1.2rem 1.4rem 0.8rem;
@@ -228,6 +273,7 @@
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
   }
 
   .sidebar-add-btn {
@@ -521,8 +567,7 @@
   .serial-controls { display: flex; gap: 0.2rem; flex-direction: column; }
 
   @media (max-width: 640px) {
-    .sidebar { width: 200px; }
-    .main-pane, .reader-content-wrap { padding: 2rem 1.5rem; }
+    .main-pane, .reader-content-wrap { padding: 2rem 1.2rem; }
     .app-header { padding: 0.9rem 1rem; }
   }
 </style>
@@ -558,7 +603,12 @@
 ═══════════════════════════════════════ -->
 <div id="v-editor" class="view">
   <div class="app-header">
-    <h1 id="editor-book-title">The Book</h1>
+    <div style="display:flex;align-items:center;gap:0.8rem;">
+      <button class="hamburger-btn" id="editor-hamburger" onclick="toggleDrawer('editor')" title="Chapters" aria-label="Toggle chapters">
+        <span></span><span></span><span></span>
+      </button>
+      <h1 id="editor-book-title">The Book</h1>
+    </div>
     <div class="header-actions">
       <button class="btn-sm" onclick="openChangePassword()">Change password</button>
       <button class="btn-sm" onclick="openBookSettings()">Book title</button>
@@ -566,9 +616,12 @@
     </div>
   </div>
 
+  <!-- Drawer backdrop -->
+  <div class="drawer-backdrop" id="editor-backdrop" onclick="closeDrawer('editor')"></div>
+
   <div class="app-body">
-    <!-- Sidebar -->
-    <nav class="sidebar">
+    <!-- Sidebar drawer -->
+    <nav class="sidebar" id="editor-sidebar">
       <div class="sidebar-header">
         Chapters
         <button class="sidebar-add-btn" title="Add chapter" onclick="openAddChapter()">＋</button>
@@ -610,7 +663,12 @@
 ═══════════════════════════════════════ -->
 <div id="v-reader" class="view">
   <div class="app-header">
-    <h1 id="reader-book-title">The Book</h1>
+    <div style="display:flex;align-items:center;gap:0.8rem;">
+      <button class="hamburger-btn" id="reader-hamburger" onclick="toggleDrawer('reader')" title="Chapters" aria-label="Toggle chapters">
+        <span></span><span></span><span></span>
+      </button>
+      <h1 id="reader-book-title">The Book</h1>
+    </div>
     <div class="header-actions">
       <button class="btn-sm" onclick="exitToLanding()">← Back</button>
     </div>
@@ -634,15 +692,18 @@
     </label>
   </div>
 
+  <!-- Drawer backdrop -->
+  <div class="drawer-backdrop" id="reader-backdrop" onclick="closeDrawer('reader')"></div>
+
   <div class="app-body">
-    <!-- Sidebar -->
-    <nav class="sidebar">
+    <!-- Sidebar drawer -->
+    <nav class="sidebar" id="reader-sidebar">
       <div class="sidebar-header">Chapters</div>
       <ul class="chapter-list" id="reader-chapter-list"></ul>
     </nav>
 
     <!-- Reading area -->
-    <div style="flex:1; overflow-y:auto;">
+    <div style="flex:1; overflow-y:auto; width:100%;">
       <div class="reader-content-wrap">
         <div class="empty-state" id="reader-empty">
           <p>No chapters yet.</p>
@@ -792,6 +853,8 @@ function showView(id) {
 function exitToLanding() {
   editorMode = false;
   currentKey = null;
+  closeDrawer('editor');
+  closeDrawer('reader');
   document.getElementById('pw-input').value = '';
   document.getElementById('pw-error').textContent = '';
   showView('v-landing');
@@ -846,6 +909,7 @@ function renderChapterLists() {
     li.addEventListener('click', evt => {
       if (evt.target.closest('.chapter-actions')) return;
       selectChapter(ch.key, true);
+      closeDrawer('editor');
     });
     el.appendChild(li);
   });
@@ -863,7 +927,10 @@ function renderChapterLists() {
     li.innerHTML = `
       <span class="chapter-num">${ch.serial || ''}</span>
       <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}</span>`;
-    li.addEventListener('click', () => selectChapter(ch.key, false));
+    li.addEventListener('click', () => {
+      selectChapter(ch.key, false);
+      closeDrawer('reader');
+    });
     rl.appendChild(li);
   });
 }
@@ -1013,13 +1080,40 @@ async function saveBookSettings() {
 /* ── Reader controls ── */
 function applyReaderFont() {
   const f = document.getElementById('reader-font-select').value;
-  document.documentElement.style.setProperty('--reader-font', f);
+  document.getElementById('reader-chapter-title').style.fontFamily = f;
+  document.getElementById('reader-body').style.fontFamily = f;
 }
 
 function applyReaderSize() {
   const s = document.getElementById('reader-size-range').value;
-  document.documentElement.style.setProperty('--reader-size', s + 'px');
-  document.getElementById('reader-size-label').textContent = s + 'px';
+  const px = s + 'px';
+  document.getElementById('reader-body').style.fontSize = px;
+  document.getElementById('reader-chapter-title').style.fontSize = (s * 1.8) + 'px';
+  document.getElementById('reader-size-label').textContent = px;
+}
+
+/* ── Drawer (hamburger sidebar) ── */
+function toggleDrawer(which) {
+  const sidebar  = document.getElementById(which + '-sidebar');
+  const backdrop = document.getElementById(which + '-backdrop');
+  const btn      = document.getElementById(which + '-hamburger');
+  const isOpen   = sidebar.classList.contains('open');
+  if (isOpen) {
+    closeDrawer(which);
+  } else {
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+function closeDrawer(which) {
+  const sidebar  = document.getElementById(which + '-sidebar');
+  const backdrop = document.getElementById(which + '-backdrop');
+  const btn      = document.getElementById(which + '-hamburger');
+  if (sidebar)  sidebar.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+  if (btn)      btn.classList.remove('open');
 }
 
 /* ── Modal helpers ── */
