@@ -996,11 +996,10 @@ function selectChapter(key, isEditor) {
     applyReaderSize();
     updateChapterNav();
 
-    // Scroll to top after DOM fully settles
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const scroller = document.getElementById('reader-scroll');
-      scroller.scrollTop = 0;
-    }));
+    // Scroll to top after click event fully completes
+    setTimeout(() => {
+      document.getElementById('reader-scroll').scrollTop = 0;
+    }, 0);
   }
 
   renderChapterLists();
