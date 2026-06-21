@@ -289,6 +289,10 @@
   /* ── READER SCROLL AREA ── */
   .reader-scroll {
     flex: 1; overflow-y: auto; width: 100%;
+    /* Prevent the browser's scroll-anchoring heuristic from
+       re-adjusting our scroll position when chapter content
+       changes height above/within the viewport. */
+    overflow-anchor: none;
   }
 
   /* ── READER HOMEPAGE ── */
@@ -996,10 +1000,22 @@ function selectChapter(key, isEditor) {
     applyReaderSize();
     updateChapterNav();
 
-    // Scroll to top after click event fully completes
-    setTimeout(() => {
-      document.getElementById('reader-scroll').scrollTop = 0;
-    }, 0);
+    // Remove focus from whatever element triggered this (a nav button
+    // or a chapter-list <li>) so the browser doesn't try to auto-scroll
+    // the container back to keep that element in view once the layout
+    // shifts to the new (shorter/taller) chapter content.
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+
+    // Reset scroll position after layout has fully settled. A plain
+    // setTimeout(...,0) can run *before* the browser's own focus-driven
+    // scroll adjustment, so we wait two animation frames instead.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById('reader-scroll').scrollTop = 0;
+      });
+    });
   }
 
   renderChapterLists();
@@ -1033,6 +1049,11 @@ function updateChapterNav() {
 }
 
 function navChapter(dir) {
+  // Blur the nav button immediately so it can't pull scroll focus
+  // back to itself once the new chapter content is rendered.
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
   const sorted = sortedChapters();
   const idx = sorted.findIndex(c => c.key === currentKey);
   const next = sorted[idx + dir];
