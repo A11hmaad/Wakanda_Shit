@@ -304,8 +304,10 @@
   }
 
   .rh-cover {
-    width: 200px;
-    height: 280px;
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+    aspect-ratio: 2 / 3;
     object-fit: cover;
     border: 1px solid var(--rule);
     box-shadow: 4px 8px 24px rgba(26,23,20,0.15);
@@ -822,7 +824,7 @@ async function bootstrap() {
 }
 
 function applyBookMeta() {
-  document.title = bookMeta.title || 'The Tapestry';
+  document.title = 'The Tapestry';
   document.getElementById('book-title-display').textContent = bookMeta.title;
   document.getElementById('book-author-display').textContent = bookMeta.author;
   document.getElementById('editor-book-title').textContent   = bookMeta.title;
@@ -994,10 +996,11 @@ function selectChapter(key, isEditor) {
     applyReaderSize();
     updateChapterNav();
 
-    // Scroll to top after DOM paints
-    requestAnimationFrame(() => {
-      document.getElementById('reader-scroll').scrollTop = 0;
-    });
+    // Scroll to top after DOM fully settles
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const scroller = document.getElementById('reader-scroll');
+      scroller.scrollTop = 0;
+    }));
   }
 
   renderChapterLists();
