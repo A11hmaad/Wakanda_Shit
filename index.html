@@ -317,78 +317,34 @@
     flex: 1; overflow-y: auto; width: 100%;
     min-height: 0;
     overflow-anchor: none;
-    /* Needed for the flip overlay to clip correctly */
     position: relative;
   }
 
   /* ══════════════════════════════════════
-     PAGE FLIP OVERLAY SYSTEM
+     SOFT 2D PAGE TRANSITION
      ══════════════════════════════════════
-     #flip-scene   — perspective wrapper, covers the scroll area
-     #flip-panel   — the rotating "page" element
-     #flip-front   — front face (snapshot of old content)
-     #flip-back    — back face (paper texture, slightly darker)
-     #flip-shadow  — shadow gradient cast onto the new page
+     Replaces the old 3D flip. #reader-area is the element that actually
+     animates: it slides + fades out, content swaps underneath while it's
+     fully transparent, then it slides + fades back in from the other side.
+     No cloning, no perspective, no scroll-offset math — just a transform/
+     opacity transition on the real content node, so it can never get out
+     of sync with what's on screen.
   ══════════════════════════════════════ */
-
-  #flip-scene {
-    position: absolute;
-    inset: 0;
-    /* Perspective depth: ~2× the width for natural page-turn feel */
-    perspective: 1800px;
-    perspective-origin: 50% 40%;
-    pointer-events: none;
-    z-index: 20;
-    display: none;   /* only shown during animation */
+  #reader-area {
+    transition: opacity 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+                transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1);
+    opacity: 1;
+    transform: translateX(0);
   }
+  #reader-area.page-out-left  { opacity: 0; transform: translateX(-28px); }
+  #reader-area.page-out-right { opacity: 0; transform: translateX(28px); }
+  #reader-area.page-in-left   { opacity: 0; transform: translateX(28px); }
+  #reader-area.page-in-right  { opacity: 0; transform: translateX(-28px); }
 
-  #flip-panel {
-    position: absolute;
-    inset: 0;
-    transform-style: preserve-3d;
-    will-change: transform;
-    /* transform-origin set by JS depending on direction */
-  }
-
-  #flip-front {
-    position: absolute;
-    inset: 0;
-    background: var(--paper);
-    backface-visibility: hidden;
-    overflow: hidden;
-  }
-
-  /* Back of the page: cream paper, slightly warm-dark. */
-  #flip-back {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to right,
-      #d4cfc5 0%,
-      #e0dbd0 20%,
-      #ddd8ce 100%
-    );
-    backface-visibility: hidden;
-    transform: rotateY(180deg);
-    /* Faint lines to look like paper back */
-    background-image: repeating-linear-gradient(
-      180deg,
-      transparent,
-      transparent 28px,
-      rgba(26,23,20,0.04) 28px,
-      rgba(26,23,20,0.04) 29px
-    ), linear-gradient(to right, #ccc8be 0%, #ddd8ce 100%);
-  }
-
-  /* Shadow cast onto the incoming page as the flipping page rotates.
-     Lives between #flip-scene and the content. */
-  #flip-shadow {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 19;
-    display: none;
-    opacity: 0;
+  @media (prefers-reduced-motion: reduce) {
+    #reader-area { transition: opacity 0.15s ease !important; transform: none !important; }
+    #reader-area.page-out-left, #reader-area.page-out-right,
+    #reader-area.page-in-left, #reader-area.page-in-right { transform: none !important; }
   }
 
   /* ── READER HOMEPAGE ── */
@@ -401,7 +357,10 @@
     align-items: center;
     gap: 3rem;
     text-align: center;
+    transition: opacity 0.35s ease;
+    opacity: 1;
   }
+  #reader-homepage.fading { opacity: 0; }
 
   .rh-cover {
     width: 100%;
@@ -624,10 +583,6 @@
     line-height: 1;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    #flip-scene { display: none !important; }
-  }
-
   @media (max-width: 640px) {
     .main-pane, .reader-content-wrap { padding: 2rem 1.2rem; }
     .app-header { padding: 0.9rem 1rem; }
@@ -762,20 +717,7 @@
       <ul class="chapter-list" id="reader-chapter-list"></ul>
     </nav>
 
-    <!-- reader-scroll is position:relative so the flip overlay clips to it -->
     <div class="reader-scroll" id="reader-scroll">
-
-      <!-- ══ PAGE FLIP OVERLAY ══
-           #flip-shadow: cast onto incoming page (z-index 19)
-           #flip-scene:  the rotating panel (z-index 20)
-      ══════════════════════════ -->
-      <div id="flip-shadow"></div>
-      <div id="flip-scene">
-        <div id="flip-panel">
-          <div id="flip-front"></div>
-          <div id="flip-back"></div>
-        </div>
-      </div>
 
       <!-- ── HOMEPAGE ── -->
       <div id="reader-homepage">
@@ -1103,153 +1045,64 @@ function sortedChapters() {
 }
 
 /* ════════════════════════════════════════
-   PAGE FLIP ANIMATION ENGINE
+   SOFT 2D PAGE TRANSITION ENGINE
    ════════════════════════════════════════
+   runPageTransition(dir, loadNewContent)
+   dir: 'right' (next chapter) | 'left' (prev chapter) | 'fade' (jump from list)
+
    How it works:
-   1. We snapshot the current visible scroll area using html2canvas — but that's
-      heavy. Instead we clone the reader-scroll's inner HTML into #flip-front,
-      apply the same scroll offset, and clip it. This is pure DOM + CSS, no canvas.
-   2. The flip panel rotates on its spine (left edge for "next", right for "prev").
-   3. A gradient shadow div (#flip-shadow) sweeps over the incoming page.
-   4. The new content is loaded before the animation starts, so it's revealed as
-      the old page rotates away.
-   5. Custom JS easing (easeInOutQuint) gives a natural flick-and-settle feel.
+   - 'fade': content swaps immediately, no animation (used for homepage →
+     chapter or sidebar jumps, where there's no real "direction").
+   - 'left'/'right': the #reader-area element itself slides + fades out in
+     the relevant direction, then — once that transition finishes — the new
+     content is loaded while #reader-area is invisible, and it's nudged to
+     the opposite side and immediately transitioned back to center.
+   This only ever touches one real DOM node (no clones, no scroll math), so
+   it can't drift out of sync with what's actually on screen, and it can't
+   get stuck mid-animation: if the user clicks next/prev again quickly we
+   just cancel the pending timer and jump straight to the new state.
 ════════════════════════════════════════ */
 
-let _flipInProgress = false;
+let _transitionTimer = null;
 
-/**
- * runPageFlip(dir, loadNewContent)
- * dir: 'right' (next chapter) | 'left' (prev chapter) | 'fade' (jump from list)
- * loadNewContent: function that populates the DOM with the new chapter
- */
-function runPageFlip(dir, loadNewContent) {
-  // Fade: just swap content directly (homepage → chapter, or sidebar jump)
+function runPageTransition(dir, loadNewContent) {
+  const area = document.getElementById('reader-area');
+
+  // Cancel any transition already in flight so rapid clicks never get stuck.
+  if (_transitionTimer) {
+    clearTimeout(_transitionTimer);
+    _transitionTimer = null;
+  }
+  area.classList.remove('page-out-left', 'page-out-right', 'page-in-left', 'page-in-right');
+
   if (dir === 'fade') {
     loadNewContent();
     return;
   }
 
-  // If a flip is already in progress, abort the animation cleanly and swap
-  if (_flipInProgress) {
-    // Force-finish any running flip
-    const scene   = document.getElementById('flip-scene');
-    const front   = document.getElementById('flip-front');
-    const shadowEl = document.getElementById('flip-shadow');
-    const panel   = document.getElementById('flip-panel');
-    panel.style.transform   = '';
-    front.innerHTML         = '';
-    scene.style.display     = 'none';
-    shadowEl.style.display  = 'none';
-    shadowEl.style.opacity  = '0';
-    _flipInProgress         = false;
+  const outClass = dir === 'right' ? 'page-out-left'  : 'page-out-right';
+  const inClass  = dir === 'right' ? 'page-in-right'  : 'page-in-left';
+
+  // Force a reflow so the outgoing transition reliably plays even if a
+  // class was just removed above.
+  void area.offsetWidth;
+  area.classList.add(outClass);
+
+  _transitionTimer = setTimeout(() => {
     loadNewContent();
-    return;
-  }
 
-  const scrollEl = document.getElementById('reader-scroll');
-  const scene    = document.getElementById('flip-scene');
-  const panel    = document.getElementById('flip-panel');
-  const front    = document.getElementById('flip-front');
-  const shadowEl = document.getElementById('flip-shadow');
+    // Snap to the "incoming" position with no transition, then release
+    // it on the next frame so the browser animates the move to center.
+    area.classList.remove(outClass);
+    area.classList.add(inClass);
+    void area.offsetWidth;
 
-  const W = scrollEl.clientWidth;
-  const H = scrollEl.clientHeight;
+    requestAnimationFrame(() => {
+      area.classList.remove(inClass);
+    });
 
-  /* ── 1. Snapshot the OLD page into #flip-front ──
-     Must happen BEFORE loadNewContent() mutates the DOM. */
-  const readerArea = document.getElementById('reader-area');
-  const clone = readerArea.cloneNode(true);
-
-  const scrollTop = scrollEl.scrollTop;
-  clone.style.cssText = [
-    'position:absolute',
-    'top:' + (-scrollTop) + 'px',
-    'left:0',
-    'width:100%',
-    'margin:0',
-    'pointer-events:none',
-  ].join(';');
-
-  // Mirror current font/size onto the clone
-  const readerBody = document.getElementById('reader-body');
-  const cloneBody  = clone.querySelector('#reader-body');
-  if (cloneBody) {
-    cloneBody.style.fontFamily = readerBody.style.fontFamily || '';
-    cloneBody.style.fontSize   = readerBody.style.fontSize   || '';
-  }
-
-  front.innerHTML = '';
-  front.appendChild(clone);
-
-  /* ── 2. Show the scene overlay (clips to scroll area via position:absolute) ── */
-  scene.style.width   = W + 'px';
-  scene.style.height  = H + 'px';
-  scene.style.display = 'block';
-
-  /* ── 3. Pivot direction ── */
-  if (dir === 'right') {
-    panel.style.transformOrigin = 'left center';
-    shadowEl.style.background = [
-      'linear-gradient(to right,',
-      'rgba(26,23,20,0.30) 0%,',
-      'rgba(26,23,20,0.08) 40%,',
-      'rgba(26,23,20,0) 65%)',
-    ].join(' ');
-  } else {
-    panel.style.transformOrigin = 'right center';
-    shadowEl.style.background = [
-      'linear-gradient(to left,',
-      'rgba(26,23,20,0.30) 0%,',
-      'rgba(26,23,20,0.08) 40%,',
-      'rgba(26,23,20,0) 65%)',
-    ].join(' ');
-  }
-
-  /* ── 4. Load new content underneath (hidden by flip-front overlay) ── */
-  loadNewContent();
-
-  /* ── 5. Show shadow ── */
-  shadowEl.style.display = 'block';
-  shadowEl.style.opacity = '0';
-
-  /* ── 6. Animate ── */
-  _flipInProgress = true;
-  const DURATION    = 500;
-  const startTime   = performance.now();
-  const targetAngle = dir === 'right' ? -180 : 180;
-
-  function easeInOutQuint(t) {
-    return t < 0.5 ? 16*t*t*t*t*t : 1 - Math.pow(-2*t + 2, 5) / 2;
-  }
-
-  function tick(now) {
-    const t    = Math.min((now - startTime) / DURATION, 1);
-    const ease = easeInOutQuint(t);
-    const angle = ease * targetAngle;
-
-    // Bell curve peaks at 90° (mid-flip) — used for warp + shadow
-    const midProgress = Math.sin(ease * Math.PI);
-    const scaleX = 1 - midProgress * 0.08;
-    const skewY  = midProgress * (dir === 'right' ? -2.5 : 2.5);
-
-    panel.style.transform = 'rotateY(' + angle + 'deg) scaleX(' + scaleX + ') skewY(' + skewY + 'deg)';
-    shadowEl.style.opacity = (midProgress * 0.55).toFixed(3);
-
-    if (t < 1) {
-      requestAnimationFrame(tick);
-    } else {
-      // Cleanup
-      panel.style.transform  = '';
-      front.innerHTML        = '';
-      scene.style.display    = 'none';
-      shadowEl.style.display = 'none';
-      shadowEl.style.opacity = '0';
-      _flipInProgress        = false;
-    }
-  }
-
-  requestAnimationFrame(tick);
+    _transitionTimer = null;
+  }, 320); // slightly shorter than the CSS duration so motion feels continuous
 }
 
 /* ════════════════════════════════════════
@@ -1390,24 +1243,19 @@ function selectChapter(key, isEditor, animDir) {
 
   } else {
     // Reader path
-    // Capture prevKey BEFORE modifying currentKey.
-    // runPageFlip must clone the OLD DOM first, so currentKey must still be the old chapter.
     const prevKey = currentKey;
 
     localStorage.setItem('tapestry_last_chapter', key);
 
-    // Show reader area so there is DOM to clone for the flip
     document.getElementById('reader-homepage').style.display      = 'none';
     document.getElementById('reader-area').style.display          = 'block';
     document.getElementById('reading-progress-bar').style.display = 'block';
 
-    // Saved position for the chapter we are navigating TO
     const savedScroll   = parseInt(localStorage.getItem('tapestry_scroll_'   + key)) || 0;
     const savedProgress = Math.min(100, parseInt(localStorage.getItem('tapestry_progress_' + key)) || 0);
 
-    // loadContent runs inside runPageFlip after the old-page clone is taken
     function loadContent() {
-      currentKey = key;   // update NOW, after clone is captured
+      currentKey = key;
 
       document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
       document.getElementById('reader-body').innerHTML =
@@ -1426,20 +1274,19 @@ function selectChapter(key, isEditor, animDir) {
         document.activeElement.blur();
       }
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const scrollEl = document.getElementById('reader-scroll');
-          scrollEl.scrollTop = savedScroll;
-          document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
-          updateMinsLeft(savedProgress);
-        });
-      });
+      // Jump the scroll position immediately (no animated scrolling — only
+      // the page-content fade/slide is animated) so the saved reading
+      // position is restored cleanly under the transition.
+      const scrollEl = document.getElementById('reader-scroll');
+      scrollEl.scrollTop = savedScroll;
+      document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
+      updateMinsLeft(savedProgress);
 
       renderChapterLists();
     }
 
     const effectiveDir = prevKey ? animDir : 'fade';
-    runPageFlip(effectiveDir, loadContent);
+    runPageTransition(effectiveDir, loadContent);
   }
 }
 
