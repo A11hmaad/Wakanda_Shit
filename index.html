@@ -9,10 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
 
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js">
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -29,6 +27,7 @@
             --sans: 'Inter', system-ui, sans-serif;
             --progress-bg: #e8e2d8;
             --shadow-sm: 0 2px 8px rgba(26, 23, 20, 0.08);
+            --notes-accent: #6b4c3b;
         }
 
         *,
@@ -207,6 +206,15 @@
         .btn-sm.danger:hover {
             border-color: var(--danger);
             color: var(--danger);
+        }
+        .btn-sm.notes-nav-btn {
+            background: var(--notes-accent);
+            color: #f7f4ee;
+            border-color: var(--notes-accent);
+        }
+        .btn-sm.notes-nav-btn:hover {
+            background: #4a3025;
+            border-color: #4a3025;
         }
 
         /* ── LAYOUT ── */
@@ -691,44 +699,21 @@
             will-change: transform;
         }
 
-        /* ── PAGE TURN ANIMATIONS ── */
         @keyframes pageFromRight {
-            from {
-                transform: translateX(70px);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(70px); opacity: 1; }
+            to { transform: translateX(0); opacity: 1; }
         }
         @keyframes pageFromLeft {
-            from {
-                transform: translateX(-70px);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(-70px); opacity: 1; }
+            to { transform: translateX(0); opacity: 1; }
         }
         @keyframes pageFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        .page-anim-right {
-            animation: pageFromRight 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        .page-anim-left {
-            animation: pageFromLeft 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
-        }
-        .page-anim-fade {
-            animation: pageFadeIn 0.55s ease;
-        }
+        .page-anim-right { animation: pageFromRight 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
+        .page-anim-left { animation: pageFromLeft 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
+        .page-anim-fade { animation: pageFadeIn 0.55s ease; }
 
         .reader-chapter-heading {
             font-family: var(--serif);
@@ -773,7 +758,6 @@
             text-decoration: underline;
         }
 
-        /* ── CHAPTER NAV (prev/next) ── */
         .chapter-nav {
             display: flex;
             gap: 1rem;
@@ -821,7 +805,6 @@
             color: var(--accent);
         }
 
-        /* ── END OF BOOK ── */
         .end-of-book {
             display: none;
             margin-top: 4rem;
@@ -1096,6 +1079,56 @@
             font-style: italic;
         }
 
+        /* ── NOTES BROWSER (card lists) ── */
+        .notes-browser {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .notes-browser-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--rule);
+        }
+        .notes-browser-header h3 {
+            font-family: var(--serif);
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.04em;
+        }
+        .notes-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.8rem;
+        }
+        .notes-card {
+            border: 1px solid var(--rule);
+            padding: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            background: var(--paper);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .notes-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+        .notes-card-name {
+            font-family: var(--serif);
+            font-size: 1rem;
+            color: var(--ink);
+        }
+        .notes-card-actions {
+            display: flex;
+            gap: 0.2rem;
+        }
+
         /* ── TIMELINE ── */
         .timeline-era-setup {
             display: flex;
@@ -1124,7 +1157,7 @@
             font-size: 0.85rem;
             color: var(--ink);
             outline: none;
-            width: 160px;
+            width: 140px;
         }
         .timeline-entries {
             display: flex;
@@ -1186,6 +1219,9 @@
             .notes-editor-area {
                 padding: 1.5rem;
             }
+            .notes-card-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -1223,7 +1259,7 @@
                 <h1 id="editor-book-title">The Book</h1>
             </div>
             <div class="header-actions">
-                <button class="btn-sm" onclick="openNotesPanel()">Notes</button>
+                <button class="btn-sm notes-nav-btn" onclick="openNotesPanel()">Notes</button>
                 <button class="btn-sm" onclick="openChangePassword()">Change password</button>
                 <button class="btn-sm" onclick="openBookSettings()">Book settings</button>
                 <button class="btn-sm danger" onclick="exitToLanding()">Exit</button>
@@ -1241,12 +1277,10 @@
                 <ul class="chapter-list" id="editor-chapter-list"></ul>
             </nav>
 
-            <!-- Chapters editor -->
             <div class="main-pane" id="editor-main">
                 <div class="empty-state" id="editor-empty">
                     <p>Select a chapter to begin, or add one.</p>
                 </div>
-
                 <div id="editor-area" style="display:none;flex-direction:column;flex:1;">
                     <input type="text" class="editor-chapter-title" id="editor-title-input" placeholder="Chapter title" />
                     <div class="editor-toolbar">
@@ -1263,7 +1297,7 @@
                 </div>
             </div>
 
-            <!-- Notes panel (hidden by default) -->
+            <!-- Notes panel -->
             <div class="notes-container" id="notes-panel" style="display:none;">
                 <div class="notes-sidebar" id="notes-sidebar">
                     <div class="notes-sidebar-header">
@@ -1276,6 +1310,15 @@
                     <div class="empty-state" id="notes-empty">
                         <p>Select a note category to begin.</p>
                     </div>
+                    <!-- Notes browser (card list for characters/nations/religions/worldbuilding/potential scenes) -->
+                    <div class="notes-browser" id="notes-browser" style="display:none;">
+                        <div class="notes-browser-header">
+                            <h3 id="notes-browser-title">Items</h3>
+                            <button class="btn-accent" id="notes-browser-add-btn" onclick="handleNotesBrowserAdd()">＋ Add</button>
+                        </div>
+                        <div id="notes-browser-content"></div>
+                    </div>
+                    <!-- Rich text editor -->
                     <div id="notes-editor-content" style="display:none;flex-direction:column;flex:1;">
                         <input type="text" class="notes-editor-title" id="notes-editor-title" placeholder="Note title" />
                         <div class="editor-toolbar">
@@ -1289,11 +1332,19 @@
                             <button class="btn-accent" onclick="saveCurrentNote()">Save Note</button>
                         </div>
                     </div>
+                    <!-- Potential chapters list (inside a character) -->
+                    <div id="notes-pc-list" style="display:none;flex-direction:column;flex:1;">
+                        <div class="notes-browser-header">
+                            <h3 id="notes-pc-list-title">Potential Chapters</h3>
+                            <button class="btn-accent" onclick="openAddPotentialChapter()">＋ Add Chapter</button>
+                        </div>
+                        <div id="notes-pc-list-content"></div>
+                    </div>
                     <!-- Timeline view -->
                     <div id="notes-timeline-view" style="display:none;flex-direction:column;flex:1;">
                         <div class="timeline-era-setup">
-                            <label>Era name <input type="text" id="timeline-era-name" placeholder="e.g. BC/AD" onchange="timelineUnsaved()" /></label>
-                            <label>Suffix <input type="text" id="timeline-era-suffix" placeholder="e.g. BC" onchange="timelineUnsaved()" /></label>
+                            <label>Positive suffix <input type="text" id="timeline-era-positive" placeholder="e.g. AD" onchange="timelineUnsaved()" /></label>
+                            <label>Negative suffix <input type="text" id="timeline-era-negative" placeholder="e.g. BC" onchange="timelineUnsaved()" /></label>
                             <button class="btn-accent" onclick="saveTimelineSettings()" style="height:fit-content;">Save Era</button>
                         </div>
                         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center;">
@@ -1328,79 +1379,47 @@
                 <button class="btn-sm" onclick="exitToLanding()">Exit</button>
             </div>
         </div>
-
         <div class="reader-controls">
-            <label>Font
-                <select id="reader-font-select" onchange="applyReaderFont()">
+            <label>Font <select id="reader-font-select" onchange="applyReaderFont()">
                     <option value="'Cormorant Garamond', Georgia, serif">Cormorant (default)</option>
                     <option value="Georgia, serif">Georgia</option>
                     <option value="'Times New Roman', serif">Times New Roman</option>
                     <option value="'Palatino Linotype', Palatino, serif">Palatino</option>
                     <option value="'Inter', system-ui, sans-serif">Inter (sans)</option>
                     <option value="'Courier New', monospace">Courier (mono)</option>
-                </select>
-            </label>
-            <label>Size
-                <input type="range" id="reader-size-range" min="12" max="28" value="19" oninput="applyReaderSize()" />
-                <span id="reader-size-label" style="font-family:var(--sans);font-size:0.8rem;color:var(--muted)">19px</span>
-            </label>
+                </select></label>
+            <label>Size <input type="range" id="reader-size-range" min="12" max="28" value="19" oninput="applyReaderSize()" />
+                <span id="reader-size-label" style="font-family:var(--sans);font-size:0.8rem;color:var(--muted)">19px</span></label>
         </div>
-
-        <div id="reading-progress-bar">
-            <div id="reading-progress-fill"></div>
-        </div>
-
+        <div id="reading-progress-bar"><div id="reading-progress-fill"></div></div>
         <div class="drawer-backdrop" id="reader-backdrop" onclick="closeDrawer('reader')"></div>
-
         <div class="app-body">
             <nav class="sidebar" id="reader-sidebar">
                 <div class="sidebar-header">Chapters</div>
                 <ul class="chapter-list" id="reader-chapter-list"></ul>
             </nav>
-
             <div class="reader-scroll" id="reader-scroll">
                 <div id="reader-homepage">
                     <div id="rh-cover-wrap"></div>
-                    <div>
-                        <div class="rh-title" id="rh-title-display">The Book</div>
-                        <div class="rh-author" id="rh-author-display"></div>
-                    </div>
+                    <div><div class="rh-title" id="rh-title-display">The Book</div><div class="rh-author" id="rh-author-display"></div></div>
                     <div class="rh-divider"></div>
                     <div class="rh-intro" id="rh-intro-display" style="display:none;"></div>
                     <div class="rh-divider"></div>
                     <div style="width:100%;max-width:480px;">
                         <div class="rh-read-heading" id="rh-read-heading">Read</div>
-                        <ul class="rh-chapter-list" id="rh-chapter-list">
-                            <li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li>
-                        </ul>
+                        <ul class="rh-chapter-list" id="rh-chapter-list"><li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li></ul>
                     </div>
                 </div>
-
                 <div id="reader-area" style="display:none;">
                     <div class="reader-content-wrap">
                         <h2 class="reader-chapter-heading" id="reader-chapter-title"></h2>
-                        <div class="reader-chapter-meta-bar">
-                            <span id="reader-chapter-meta"></span>
-                            <span id="reader-mins-left"></span>
-                        </div>
+                        <div class="reader-chapter-meta-bar"><span id="reader-chapter-meta"></span><span id="reader-mins-left"></span></div>
                         <div id="reader-body"></div>
                         <div class="chapter-nav" id="chapter-nav">
-                            <button class="chapter-nav-btn prev disabled" id="nav-prev" onclick="navChapter(-1)">
-                                <span class="nav-label">← Previous</span>
-                                <span class="nav-title" id="nav-prev-title"></span>
-                            </button>
-                            <button class="chapter-nav-btn next disabled" id="nav-next" onclick="navChapter(1)">
-                                <span class="nav-label">Next →</span>
-                                <span class="nav-title" id="nav-next-title"></span>
-                            </button>
+                            <button class="chapter-nav-btn prev disabled" id="nav-prev" onclick="navChapter(-1)"><span class="nav-label">← Previous</span><span class="nav-title" id="nav-prev-title"></span></button>
+                            <button class="chapter-nav-btn next disabled" id="nav-next" onclick="navChapter(1)"><span class="nav-label">Next →</span><span class="nav-title" id="nav-next-title"></span></button>
                         </div>
-                        <div class="end-of-book" id="end-of-book">
-                            <div class="end-ornament">∗ &nbsp; ∗ &nbsp; ∗</div>
-                            <div class="end-text">
-                                This is the end of the tapestry, for now…<br>
-                                <span style="font-size:0.9rem;opacity:0.7;">More threads are yet to be woven.</span>
-                            </div>
-                        </div>
+                        <div class="end-of-book" id="end-of-book"><div class="end-ornament">∗ &nbsp; ∗ &nbsp; ∗</div><div class="end-text">This is the end of the tapestry, for now…<br><span style="font-size:0.9rem;opacity:0.7;">More threads are yet to be woven.</span></div></div>
                     </div>
                 </div>
             </div>
@@ -1410,121 +1429,14 @@
     <!-- ═══════════════════════════════════════
      MODALS
 ═══════════════════════════════════════ -->
-    <div class="modal-overlay" id="modal-add-chapter">
-        <div class="modal">
-            <h2>New chapter</h2>
-            <label>Title <input type="text" id="new-chapter-title" placeholder="Chapter title" /></label>
-            <label>Serial (order) <input type="number" id="new-chapter-serial" min="1" value="1" /></label>
-            <div class="error-msg" id="add-chapter-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-add-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="addChapter()">Add</button>
-            </div>
-        </div>
-    </div>
+    <div class="modal-overlay" id="modal-add-chapter"><div class="modal"><h2>New chapter</h2><label>Title <input type="text" id="new-chapter-title" placeholder="Chapter title" /></label><label>Serial (order) <input type="number" id="new-chapter-serial" min="1" value="1" /></label><div class="error-msg" id="add-chapter-error"></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-add-chapter')">Cancel</button><button class="btn-accent" onclick="addChapter()">Add</button></div></div></div>
+    <div class="modal-overlay" id="modal-edit-chapter"><div class="modal"><h2>Edit chapter</h2><input type="hidden" id="edit-chapter-key" /><label>Title <input type="text" id="edit-chapter-title" /></label><label>Serial (order) <input type="number" id="edit-chapter-serial" min="1" /></label><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-edit-chapter')">Cancel</button><button class="btn-accent" onclick="saveChapterMeta()">Save</button></div></div></div>
+    <div class="modal-overlay" id="modal-change-pw"><div class="modal"><h2>Change password</h2><label>Current password <input type="password" id="old-pw" /></label><label>New password <input type="password" id="new-pw" /></label><label>Confirm new password <input type="password" id="new-pw2" /></label><div class="error-msg" id="pw-change-error"></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-change-pw')">Cancel</button><button class="btn-accent" onclick="changePassword()">Update</button></div></div></div>
+    <div class="modal-overlay" id="modal-book-settings"><div class="modal"><h2>Book settings</h2><label>Title <input type="text" id="bs-title" placeholder="My Novel" /></label><label>Author / subtitle <input type="text" id="bs-author" placeholder="by Author Name" /></label><label style="flex-direction:column;gap:0.6rem;">Introduction (shown on homepage)<textarea id="bs-intro" rows="5" style="padding:0.65rem 0.9rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;line-height:1.6;transition:border-color 0.15s;" placeholder="A few words about this story…"></textarea></label><label style="gap:0.8rem;">Cover image<div id="cover-current-wrap" style="display:none;"><div class="cover-preview-wrap"><img id="cover-current-img" class="cover-preview-img" src="" alt="Current cover" /><button class="cover-remove-btn" onclick="removeCover()" title="Remove cover">✕</button></div></div><input type="file" id="bs-cover-input" accept="image/*" onchange="previewCover(event)" style="font-size:0.82rem;color:var(--muted);" /><div id="cover-new-preview-wrap" style="display:none;"><img id="cover-new-preview" class="cover-preview-img" src="" alt="New cover preview" /><p style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;font-family:var(--sans);">New cover (not saved yet)</p></div></label><div class="error-msg" id="bs-error"></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-book-settings')">Cancel</button><button class="btn-accent" onclick="saveBookSettings()">Save</button></div></div></div>
+    <div class="modal-overlay" id="modal-add-item"><div class="modal"><h2 id="modal-add-item-title">Add Item</h2><label>Name <input type="text" id="new-item-name" placeholder="Name" /></label><div class="error-msg" id="add-item-error"></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-add-item')">Cancel</button><button class="btn-accent" id="modal-add-item-btn" onclick="addNotesItem()">Add</button></div></div></div>
+    <div class="modal-overlay" id="modal-add-potential-chapter"><div class="modal"><h2>Add Potential Chapter</h2><label>Title <input type="text" id="new-pc-title" placeholder="Chapter title" /></label><label>Serial (order) <input type="number" id="new-pc-serial" min="1" value="1" /></label><div class="error-msg" id="add-pc-error"></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-add-potential-chapter')">Cancel</button><button class="btn-accent" onclick="addPotentialChapter()">Add</button></div></div></div>
+    <div class="modal-overlay" id="modal-edit-potential-chapter"><div class="modal"><h2>Edit Potential Chapter</h2><input type="hidden" id="edit-pc-key" /><label>Title <input type="text" id="edit-pc-title" /></label><label>Serial (order) <input type="number" id="edit-pc-serial" min="1" /></label><div class="modal-actions"><button class="btn-cancel" onclick="closeModal('modal-edit-potential-chapter')">Cancel</button><button class="btn-accent" onclick="savePotentialChapterMeta()">Save</button></div></div></div>
 
-    <div class="modal-overlay" id="modal-edit-chapter">
-        <div class="modal">
-            <h2>Edit chapter</h2>
-            <input type="hidden" id="edit-chapter-key" />
-            <label>Title <input type="text" id="edit-chapter-title" /></label>
-            <label>Serial (order) <input type="number" id="edit-chapter-serial" min="1" /></label>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-edit-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="saveChapterMeta()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-change-pw">
-        <div class="modal">
-            <h2>Change password</h2>
-            <label>Current password <input type="password" id="old-pw" /></label>
-            <label>New password <input type="password" id="new-pw" /></label>
-            <label>Confirm new password <input type="password" id="new-pw2" /></label>
-            <div class="error-msg" id="pw-change-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-change-pw')">Cancel</button>
-                <button class="btn-accent" onclick="changePassword()">Update</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-book-settings">
-        <div class="modal">
-            <h2>Book settings</h2>
-            <label>Title <input type="text" id="bs-title" placeholder="My Novel" /></label>
-            <label>Author / subtitle <input type="text" id="bs-author" placeholder="by Author Name" /></label>
-            <label style="flex-direction:column;gap:0.6rem;">
-                Introduction (shown on homepage)
-                <textarea id="bs-intro" rows="5" style="padding:0.65rem 0.9rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;line-height:1.6;transition:border-color 0.15s;" placeholder="A few words about this story…"></textarea>
-            </label>
-            <label style="gap:0.8rem;">
-                Cover image
-                <div id="cover-current-wrap" style="display:none;">
-                    <div class="cover-preview-wrap">
-                        <img id="cover-current-img" class="cover-preview-img" src="" alt="Current cover" />
-                        <button class="cover-remove-btn" onclick="removeCover()" title="Remove cover">✕</button>
-                    </div>
-                </div>
-                <input type="file" id="bs-cover-input" accept="image/*" onchange="previewCover(event)" style="font-size:0.82rem;color:var(--muted);" />
-                <div id="cover-new-preview-wrap" style="display:none;">
-                    <img id="cover-new-preview" class="cover-preview-img" src="" alt="New cover preview" />
-                    <p style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;font-family:var(--sans);">New cover (not saved yet)</p>
-                </div>
-            </label>
-            <div class="error-msg" id="bs-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-book-settings')">Cancel</button>
-                <button class="btn-accent" onclick="saveBookSettings()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add character / subfolder modal -->
-    <div class="modal-overlay" id="modal-add-character">
-        <div class="modal">
-            <h2 id="modal-add-character-title">Add Character</h2>
-            <label>Name <input type="text" id="new-character-name" placeholder="Character name" /></label>
-            <div class="error-msg" id="add-character-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-add-character')">Cancel</button>
-                <button class="btn-accent" onclick="addCharacter()">Add</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add potential chapter modal -->
-    <div class="modal-overlay" id="modal-add-potential-chapter">
-        <div class="modal">
-            <h2>Add Potential Chapter</h2>
-            <label>Title <input type="text" id="new-pc-title" placeholder="Chapter title" /></label>
-            <label>Serial (order) <input type="number" id="new-pc-serial" min="1" value="1" /></label>
-            <div class="error-msg" id="add-pc-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-add-potential-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="addPotentialChapter()">Add</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit potential chapter modal -->
-    <div class="modal-overlay" id="modal-edit-potential-chapter">
-        <div class="modal">
-            <h2>Edit Potential Chapter</h2>
-            <input type="hidden" id="edit-pc-key" />
-            <label>Title <input type="text" id="edit-pc-title" /></label>
-            <label>Serial (order) <input type="number" id="edit-pc-serial" min="1" /></label>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-edit-potential-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="savePotentialChapterMeta()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════ -->
     <script>
         /* ── Firebase ── */
         const firebaseConfig = {
@@ -1549,46 +1461,36 @@
 
         // Notes state
         let notesData = {
-            characters: {},        // { charId: { name, chapters: { chId: { title, serial, content } } } }
-            nations: {},           // { nationId: { name, content } }
-            religions: {},         // { religionId: { name, content } }
-            worldbuilding: {},     // { wbId: { name, content } }
+            characters: {},        // { charId: { name, content } }  — NEW: character profiles
+            potentialScenes: {},   // { psCharId: { name, chapters: { chId: { title, serial, content } } } }  — renamed from old "characters"
+            nations: {},
+            religions: {},
+            worldbuilding: {},
             overallStory: { content: '' },
-            timeline: { eraName: 'BC/AD', suffix: 'BC', entries: [] }  // entries: [{ year, text }]
+            timeline: { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] }
         };
-        let notesCurrentCategory = null;     // 'characters' | 'nations' | 'religions' | 'worldbuilding' | 'overallStory' | 'timeline'
-        let notesCurrentCharId = null;
-        let notesCurrentChId = null;
+        let notesCurrentCategory = null;
+        let notesCurrentCharId = null;        // for character profiles
+        let notesCurrentPsCharId = null;      // for potential scenes character
+        let notesCurrentChId = null;          // for potential chapter
         let notesCurrentNationId = null;
         let notesCurrentReligionId = null;
         let notesCurrentWbId = null;
         let notesUnsavedFlag = false;
         let timelineUnsavedFlag = false;
+        let notesAddMode = null; // 'characters' | 'potentialScenes' | 'nations' | 'religions' | 'worldbuilding'
 
-        /* ════════════════════════════════════════
-           HELPERS
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ HELPERS ════════════════════════════════════════ */
         function wordCount(html) {
             const text = (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
             if (!text) return 0;
             return text.split(' ').filter(w => w.length > 0).length;
         }
+        function readingMins(html) { return Math.max(1, Math.ceil(wordCount(html) / 200)); }
+        function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function clampPct(val) { return Math.max(0, Math.min(100, Math.round(val))); }
 
-        function readingMins(html) {
-            return Math.max(1, Math.ceil(wordCount(html) / 200));
-        }
-
-        function escHtml(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        function clampPct(val) {
-            return Math.max(0, Math.min(100, Math.round(val)));
-        }
-
-        /* ════════════════════════════════════════
-           BOOTSTRAP
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ BOOTSTRAP ════════════════════════════════════════ */
         async function bootstrap() {
             const metaSnap = await db.ref('meta').get();
             if (metaSnap.exists()) {
@@ -1600,29 +1502,25 @@
                 if (m.password) storedPassword = m.password;
             }
             applyBookMeta();
-
             db.ref('chapters').on('value', snap => {
                 chapters = snap.val() || {};
                 renderChapterLists();
                 renderHomepage();
             });
-
-            // Load notes
             db.ref('notes').on('value', snap => {
                 if (snap.exists()) {
-                    notesData = snap.val();
-                    // Ensure all expected keys exist
-                    notesData.characters = notesData.characters || {};
-                    notesData.nations = notesData.nations || {};
-                    notesData.religions = notesData.religions || {};
-                    notesData.worldbuilding = notesData.worldbuilding || {};
-                    notesData.overallStory = notesData.overallStory || { content: '' };
-                    notesData.timeline = notesData.timeline || { eraName: 'BC/AD', suffix: 'BC', entries: [] };
+                    const d = snap.val();
+                    notesData.characters = d.characters || {};
+                    notesData.potentialScenes = d.potentialScenes || (d.characters && !d.potentialScenes ? d.characters : {});
+                    notesData.nations = d.nations || {};
+                    notesData.religions = d.religions || {};
+                    notesData.worldbuilding = d.worldbuilding || {};
+                    notesData.overallStory = d.overallStory || { content: '' };
+                    notesData.timeline = d.timeline || { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] };
                     if (!notesData.timeline.entries) notesData.timeline.entries = [];
                 }
                 renderNotesNav();
             });
-
             setupScrollListener();
         }
 
@@ -1635,37 +1533,23 @@
             renderHomepage();
         }
 
-        /* ════════════════════════════════════════
-           VIEWS
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ VIEWS ════════════════════════════════════════ */
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
-
         function exitToLanding() {
-            if (document.getElementById('v-reader').classList.contains('active')) {
-                flushScrollSave();
-            }
-            editorMode = false;
-            currentKey = null;
-            closeDrawer('editor');
-            closeDrawer('reader');
+            if (document.getElementById('v-reader').classList.contains('active')) flushScrollSave();
+            editorMode = false; currentKey = null;
+            closeDrawer('editor'); closeDrawer('reader');
             document.getElementById('pw-input').value = '';
             document.getElementById('pw-error').textContent = '';
             showView('v-landing');
         }
-
         function enterReader() {
-            editorMode = false;
-            currentKey = null;
-            showView('v-reader');
-            loadReaderPrefs();
-            renderHomepage();
-            showHomepage();
-            renderChapterLists();
+            editorMode = false; currentKey = null;
+            showView('v-reader'); loadReaderPrefs(); renderHomepage(); showHomepage(); renderChapterLists();
         }
-
         function showHomepage() {
             document.getElementById('reader-homepage').style.display = '';
             document.getElementById('reader-area').style.display = 'none';
@@ -1673,14 +1557,7 @@
             currentKey = null;
             document.querySelectorAll('#reader-chapter-list .chapter-item').forEach(li => li.classList.remove('active'));
         }
-
-        function goReaderHome() {
-            flushScrollSave();
-            closeDrawer('reader');
-            renderHomepage();
-            showHomepage();
-        }
-
+        function goReaderHome() { flushScrollSave(); closeDrawer('reader'); renderHomepage(); showHomepage(); }
         function tryLogin() {
             const val = document.getElementById('pw-input').value;
             if (val === storedPassword) {
@@ -1689,37 +1566,41 @@
                 showView('v-editor');
                 showChaptersView();
                 renderChapterLists();
-            } else {
-                document.getElementById('pw-error').textContent = 'Incorrect password.';
-            }
+            } else { document.getElementById('pw-error').textContent = 'Incorrect password.'; }
         }
 
-        /* ════════════════════════════════════════
-           NOTES PANEL
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ NOTES PANEL ════════════════════════════════════════ */
         function openNotesPanel() {
             document.getElementById('editor-main').style.display = 'none';
             document.getElementById('notes-panel').style.display = 'flex';
             renderNotesNav();
-            // Select first category by default if nothing selected
-            if (!notesCurrentCategory) {
-                selectNotesCategory('characters');
-            }
+            if (!notesCurrentCategory) selectNotesCategory('potentialScenes');
         }
-
         function showChaptersView() {
             document.getElementById('notes-panel').style.display = 'none';
             document.getElementById('editor-main').style.display = '';
         }
 
+        function hideAllNotesViews() {
+            document.getElementById('notes-empty').style.display = 'none';
+            document.getElementById('notes-browser').style.display = 'none';
+            document.getElementById('notes-editor-content').style.display = 'none';
+            document.getElementById('notes-pc-list').style.display = 'none';
+            document.getElementById('notes-timeline-view').style.display = 'none';
+        }
+
         function renderNotesNav() {
             const nav = document.getElementById('notes-nav-list');
+            const psCount = Object.keys(notesData.potentialScenes).length;
             const charCount = Object.keys(notesData.characters).length;
             const nationCount = Object.keys(notesData.nations).length;
             const religionCount = Object.keys(notesData.religions).length;
             const wbCount = Object.keys(notesData.worldbuilding).length;
 
             nav.innerHTML = `
+            <li class="notes-nav-category ${notesCurrentCategory === 'potentialScenes' ? 'active' : ''}" onclick="selectNotesCategory('potentialScenes')">
+              <span class="cat-icon">🎬</span> Potential Scenes <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${psCount}</span>
+            </li>
             <li class="notes-nav-category ${notesCurrentCategory === 'characters' ? 'active' : ''}" onclick="selectNotesCategory('characters')">
               <span class="cat-icon">👤</span> Characters <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${charCount}</span>
             </li>
@@ -1739,38 +1620,15 @@
               <span class="cat-icon">⏳</span> Sort Timeline
             </li>`;
 
-            // If characters is selected, show sub-list
-            if (notesCurrentCategory === 'characters') {
+            // Show sub-items for potential scenes
+            if (notesCurrentCategory === 'potentialScenes') {
                 const subList = document.createElement('ul');
                 subList.className = 'notes-sub-list';
-                Object.entries(notesData.characters).forEach(([charId, charData]) => {
+                Object.entries(notesData.potentialScenes).forEach(([psId, data]) => {
                     const li = document.createElement('li');
-                    li.className = 'notes-sub-item' + (notesCurrentCharId === charId ? ' active' : '');
-                    li.innerHTML = `
-                  <span onclick="selectCharacter('${charId}')" style="flex:1;">${escHtml(charData.name || 'Unnamed')}</span>
-                  <span class="sub-actions">
-                    <button class="icon-btn danger" onclick="event.stopPropagation();deleteCharacter('${charId}')">✕</button>
-                  </span>`;
-                    // Show potential chapters under character
-                    if (notesCurrentCharId === charId && charData.chapters) {
-                        const chList = document.createElement('ul');
-                        chList.className = 'notes-sub-list';
-                        chList.style.paddingLeft = '1.5rem';
-                        const sortedCh = Object.entries(charData.chapters)
-                            .sort((a, b) => (a[1].serial || 0) - (b[1].serial || 0));
-                        sortedCh.forEach(([chId, chData]) => {
-                            const chLi = document.createElement('li');
-                            chLi.className = 'notes-sub-item' + (notesCurrentChId === chId ? ' active' : '');
-                            chLi.innerHTML = `
-                        <span onclick="selectPotentialChapter('${charId}','${chId}')" style="flex:1;">${chData.serial || ''}. ${escHtml(chData.title || 'Untitled')}</span>
-                        <span class="sub-actions">
-                          <button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${charId}','${chId}')">✎</button>
-                          <button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${charId}','${chId}')">✕</button>
-                        </span>`;
-                            chList.appendChild(chLi);
-                        });
-                        li.appendChild(chList);
-                    }
+                    li.className = 'notes-sub-item' + (notesCurrentPsCharId === psId ? ' active' : '');
+                    li.innerHTML = `<span onclick="selectPotentialScenesCharacter('${psId}')" style="flex:1;">${escHtml(data.name || 'Unnamed')}</span>
+                      <span class="sub-actions"><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialScenesCharacter('${psId}')">✕</button></span>`;
                     subList.appendChild(li);
                 });
                 nav.appendChild(subList);
@@ -1778,110 +1636,246 @@
         }
 
         function selectNotesCategory(category) {
-            // Save any unsaved note before switching
-            if (notesUnsavedFlag && notesCurrentCategory && notesCurrentCategory !== 'timeline') {
-                saveCurrentNoteSilent();
-            }
-            if (timelineUnsavedFlag && notesCurrentCategory === 'timeline') {
-                saveTimelineEntriesSilent();
-            }
+            if (notesUnsavedFlag && notesCurrentCategory && notesCurrentCategory !== 'timeline') saveCurrentNoteSilent();
+            if (timelineUnsavedFlag && notesCurrentCategory === 'timeline') saveTimelineEntriesSilent();
 
             notesCurrentCategory = category;
             notesCurrentCharId = null;
+            notesCurrentPsCharId = null;
             notesCurrentChId = null;
             notesCurrentNationId = null;
             notesCurrentReligionId = null;
             notesCurrentWbId = null;
             notesUnsavedFlag = false;
             timelineUnsavedFlag = false;
+            hideAllNotesViews();
 
-            document.getElementById('notes-editor-content').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
-            document.getElementById('notes-empty').style.display = '';
-
-            if (category === 'characters') {
-                document.getElementById('notes-empty').style.display = '';
+            if (category === 'potentialScenes') {
+                showNotesBrowser('Potential Scenes', 'potentialScenes', notesData.potentialScenes);
+            } else if (category === 'characters') {
+                showNotesBrowser('Characters', 'characters', notesData.characters);
+            } else if (category === 'nations') {
+                showNotesBrowser('Nations', 'nations', notesData.nations);
+            } else if (category === 'religions') {
+                showNotesBrowser('Religions', 'religions', notesData.religions);
+            } else if (category === 'worldbuilding') {
+                showNotesBrowser('Worldbuilding', 'worldbuilding', notesData.worldbuilding);
             } else if (category === 'overallStory') {
                 loadOverallStoryEditor();
             } else if (category === 'timeline') {
                 loadTimelineView();
-            } else {
-                // nations, religions, worldbuilding - show list of items
-                document.getElementById('notes-empty').style.display = '';
             }
-
             renderNotesNav();
+        }
+
+        function showNotesBrowser(title, dataKey, dataObj) {
+            hideAllNotesViews();
+            document.getElementById('notes-browser').style.display = 'flex';
+            document.getElementById('notes-browser-title').textContent = title;
+            notesAddMode = dataKey;
+            renderNotesCards(dataObj, dataKey);
+        }
+
+        function renderNotesCards(dataObj, dataKey) {
+            const container = document.getElementById('notes-browser-content');
+            const entries = Object.entries(dataObj);
+            if (!entries.length) {
+                container.innerHTML = `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No items yet. Click "+ Add" to create one.</p>`;
+            } else {
+                container.innerHTML = `<div class="notes-card-grid">${entries.map(([id, data]) => `
+                  <div class="notes-card" onclick="openNotesItem('${dataKey}','${id}')">
+                    <span class="notes-card-name">${escHtml(data.name || 'Unnamed')}</span>
+                    <span class="notes-card-actions">
+                      <button class="icon-btn danger" onclick="event.stopPropagation();deleteNotesItem('${dataKey}','${id}')">✕</button>
+                    </span>
+                  </div>`).join('')}</div>`;
+            }
+        }
+
+        function handleNotesBrowserAdd() {
+            if (notesAddMode === 'potentialScenes') openAddPotentialScenesCharacter();
+            else if (notesAddMode === 'characters') openAddItem('characters', 'Add Character');
+            else if (notesAddMode === 'nations') openAddItem('nations', 'Add Nation');
+            else if (notesAddMode === 'religions') openAddItem('religions', 'Add Religion');
+            else if (notesAddMode === 'worldbuilding') openAddItem('worldbuilding', 'Add Worldbuilding Reference');
         }
 
         function handleNotesAdd() {
-            if (notesCurrentCategory === 'characters') {
-                openAddCharacter();
-            } else if (notesCurrentCategory === 'nations') {
-                openAddNation();
-            } else if (notesCurrentCategory === 'religions') {
-                openAddReligion();
-            } else if (notesCurrentCategory === 'worldbuilding') {
-                openAddWorldbuilding();
-            } else if (notesCurrentCategory === 'overallStory') {
-                // Already loaded
-            } else if (notesCurrentCategory === 'timeline') {
-                // Use the inline add
+            if (notesCurrentCategory === 'potentialScenes') openAddPotentialScenesCharacter();
+            else if (notesCurrentCategory === 'characters') openAddItem('characters', 'Add Character');
+            else if (notesCurrentCategory === 'nations') openAddItem('nations', 'Add Nation');
+            else if (notesCurrentCategory === 'religions') openAddItem('religions', 'Add Religion');
+            else if (notesCurrentCategory === 'worldbuilding') openAddItem('worldbuilding', 'Add Worldbuilding Reference');
+        }
+
+        function openAddItem(mode, title) {
+            notesAddMode = mode;
+            document.getElementById('modal-add-item-title').textContent = title;
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('add-item-error').textContent = '';
+            openModal('modal-add-item');
+        }
+
+        async function addNotesItem() {
+            const name = document.getElementById('new-item-name').value.trim();
+            if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
+            const mode = notesAddMode;
+            closeModal('modal-add-item');
+            if (mode === 'characters') {
+                const id = db.ref('notes/characters').push().key;
+                notesData.characters[id] = { name, content: '' };
+                await db.ref('notes/characters/' + id).set({ name, content: '' });
+                notesCurrentCharId = id;
+                loadCharacterProfileEditor();
+            } else if (mode === 'nations') {
+                const id = db.ref('notes/nations').push().key;
+                notesData.nations[id] = { name, content: '' };
+                await db.ref('notes/nations/' + id).set({ name, content: '' });
+                notesCurrentNationId = id;
+                loadNationEditor();
+            } else if (mode === 'religions') {
+                const id = db.ref('notes/religions').push().key;
+                notesData.religions[id] = { name, content: '' };
+                await db.ref('notes/religions/' + id).set({ name, content: '' });
+                notesCurrentReligionId = id;
+                loadReligionEditor();
+            } else if (mode === 'worldbuilding') {
+                const id = db.ref('notes/worldbuilding').push().key;
+                notesData.worldbuilding[id] = { name, content: '' };
+                await db.ref('notes/worldbuilding/' + id).set({ name, content: '' });
+                notesCurrentWbId = id;
+                loadWorldbuildingEditor();
+            }
+            renderNotesNav();
+        }
+
+        function openNotesItem(dataKey, id) {
+            if (dataKey === 'potentialScenes') {
+                selectPotentialScenesCharacter(id);
+            } else if (dataKey === 'characters') {
+                notesCurrentCharId = id;
+                loadCharacterProfileEditor();
+                renderNotesNav();
+            } else if (dataKey === 'nations') {
+                notesCurrentNationId = id;
+                loadNationEditor();
+                renderNotesNav();
+            } else if (dataKey === 'religions') {
+                notesCurrentReligionId = id;
+                loadReligionEditor();
+                renderNotesNav();
+            } else if (dataKey === 'worldbuilding') {
+                notesCurrentWbId = id;
+                loadWorldbuildingEditor();
+                renderNotesNav();
             }
         }
 
-        /* ── Characters ── */
-        function openAddCharacter() {
-            document.getElementById('modal-add-character-title').textContent = 'Add Character';
-            document.getElementById('new-character-name').value = '';
-            document.getElementById('add-character-error').textContent = '';
-            openModal('modal-add-character');
-        }
-
-        async function addCharacter() {
-            const name = document.getElementById('new-character-name').value.trim();
-            if (!name) { document.getElementById('add-character-error').textContent = 'Name required.'; return; }
-            const charId = db.ref('notes/characters').push().key;
-            notesData.characters[charId] = { name, chapters: {} };
-            await db.ref('notes/characters/' + charId).set({ name, chapters: {} });
-            closeModal('modal-add-character');
-            notesCurrentCharId = charId;
-            notesCurrentChId = null;
-            renderNotesNav();
-            document.getElementById('notes-editor-content').style.display = 'none';
-            document.getElementById('notes-empty').style.display = '';
-        }
-
-        function selectCharacter(charId) {
-            notesCurrentCharId = charId;
-            notesCurrentChId = null;
-            notesCurrentNationId = null;
-            notesCurrentReligionId = null;
-            notesCurrentWbId = null;
-            notesUnsavedFlag = false;
-            document.getElementById('notes-editor-content').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
-            document.getElementById('notes-empty').style.display = '';
+        async function deleteNotesItem(dataKey, id) {
+            if (!confirm('Delete this item?')) return;
+            const pathMap = {
+                characters: 'notes/characters',
+                potentialScenes: 'notes/potentialScenes',
+                nations: 'notes/nations',
+                religions: 'notes/religions',
+                worldbuilding: 'notes/worldbuilding'
+            };
+            delete notesData[dataKey][id];
+            await db.ref(pathMap[dataKey] + '/' + id).remove();
+            if (dataKey === 'potentialScenes' && notesCurrentPsCharId === id) {
+                notesCurrentPsCharId = null; notesCurrentChId = null;
+            } else if (dataKey === 'characters' && notesCurrentCharId === id) { notesCurrentCharId = null; }
+            else if (dataKey === 'nations' && notesCurrentNationId === id) { notesCurrentNationId = null; }
+            else if (dataKey === 'religions' && notesCurrentReligionId === id) { notesCurrentReligionId = null; }
+            else if (dataKey === 'worldbuilding' && notesCurrentWbId === id) { notesCurrentWbId = null; }
+            hideAllNotesViews();
+            selectNotesCategory(notesCurrentCategory);
             renderNotesNav();
         }
 
-        async function deleteCharacter(charId) {
-            if (!confirm('Delete this character and all their potential chapters?')) return;
-            delete notesData.characters[charId];
-            await db.ref('notes/characters/' + charId).remove();
-            if (notesCurrentCharId === charId) {
-                notesCurrentCharId = null;
+        /* ── Potential Scenes ── */
+        function openAddPotentialScenesCharacter() {
+            notesAddMode = 'potentialScenes';
+            document.getElementById('modal-add-item-title').textContent = 'Add Character';
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('add-item-error').textContent = '';
+            openModal('modal-add-item');
+            // Override button
+            const orig = document.getElementById('modal-add-item-btn').onclick;
+            document.getElementById('modal-add-item-btn').onclick = async function() {
+                const name = document.getElementById('new-item-name').value.trim();
+                if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
+                const id = db.ref('notes/potentialScenes').push().key;
+                notesData.potentialScenes[id] = { name, chapters: {} };
+                await db.ref('notes/potentialScenes/' + id).set({ name, chapters: {} });
+                closeModal('modal-add-item');
+                document.getElementById('modal-add-item-btn').onclick = addNotesItem;
+                notesCurrentPsCharId = id;
                 notesCurrentChId = null;
-                document.getElementById('notes-editor-content').style.display = 'none';
-                document.getElementById('notes-empty').style.display = '';
-            }
+                showPotentialChaptersList();
+                renderNotesNav();
+            };
+        }
+
+        function selectPotentialScenesCharacter(psId) {
+            notesCurrentPsCharId = psId;
+            notesCurrentChId = null;
+            notesUnsavedFlag = false;
+            showPotentialChaptersList();
             renderNotesNav();
         }
 
-        /* ── Potential Chapters ── */
+        async function deletePotentialScenesCharacter(psId) {
+            if (!confirm('Delete this character and all their potential chapters?')) return;
+            delete notesData.potentialScenes[psId];
+            await db.ref('notes/potentialScenes/' + psId).remove();
+            if (notesCurrentPsCharId === psId) { notesCurrentPsCharId = null; notesCurrentChId = null; }
+            hideAllNotesViews();
+            selectNotesCategory('potentialScenes');
+            renderNotesNav();
+        }
+
+        function showPotentialChaptersList() {
+            if (!notesCurrentPsCharId) return;
+            hideAllNotesViews();
+            const psData = notesData.potentialScenes[notesCurrentPsCharId];
+            if (!psData) return;
+            document.getElementById('notes-pc-list').style.display = 'flex';
+            document.getElementById('notes-pc-list-title').textContent = (psData.name || 'Character') + ' — Chapters';
+            const container = document.getElementById('notes-pc-list-content');
+            const chapters = psData.chapters || {};
+            const sorted = Object.entries(chapters).sort((a, b) => (a[1].serial || 0) - (b[1].serial || 0));
+            if (!sorted.length) {
+                container.innerHTML = `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No potential chapters yet. Click "+ Add Chapter" to create one.</p>`;
+            } else {
+                container.innerHTML = `<div style="display:flex;flex-direction:column;gap:0.5rem;">${sorted.map(([chId, chData]) => `
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border:1px solid var(--rule);cursor:pointer;transition:border-color 0.15s;" onclick="openPotentialChapterEditor('${notesCurrentPsCharId}','${chId}')">
+                    <span style="font-family:var(--serif);font-size:1rem;color:var(--ink);">${chData.serial || ''}. ${escHtml(chData.title || 'Untitled')}</span>
+                    <span style="display:flex;gap:0.3rem;">
+                      <button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${notesCurrentPsCharId}','${chId}')">✎</button>
+                      <button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${notesCurrentPsCharId}','${chId}')">✕</button>
+                    </span>
+                  </div>`).join('')}</div>`;
+            }
+        }
+
+        function openPotentialChapterEditor(psId, chId) {
+            notesCurrentPsCharId = psId;
+            notesCurrentChId = chId;
+            notesUnsavedFlag = false;
+            const chData = notesData.potentialScenes[psId]?.chapters?.[chId];
+            if (!chData) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = chData.title || '';
+            document.getElementById('notes-editor-body').innerHTML = chData.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+        }
+
         function openAddPotentialChapter() {
-            if (!notesCurrentCharId) return;
-            const charData = notesData.characters[notesCurrentCharId];
-            const chCount = charData && charData.chapters ? Object.keys(charData.chapters).length : 0;
+            if (!notesCurrentPsCharId) return;
+            const psData = notesData.potentialScenes[notesCurrentPsCharId];
+            const chCount = psData && psData.chapters ? Object.keys(psData.chapters).length : 0;
             document.getElementById('new-pc-title').value = '';
             document.getElementById('new-pc-serial').value = chCount + 1;
             document.getElementById('add-pc-error').textContent = '';
@@ -1889,121 +1883,72 @@
         }
 
         async function addPotentialChapter() {
-            if (!notesCurrentCharId) return;
+            if (!notesCurrentPsCharId) return;
             const title = document.getElementById('new-pc-title').value.trim();
             const serial = parseInt(document.getElementById('new-pc-serial').value) || 1;
             if (!title) { document.getElementById('add-pc-error').textContent = 'Title required.'; return; }
-            const chId = db.ref('notes/characters/' + notesCurrentCharId + '/chapters').push().key;
-            if (!notesData.characters[notesCurrentCharId].chapters) {
-                notesData.characters[notesCurrentCharId].chapters = {};
-            }
-            notesData.characters[notesCurrentCharId].chapters[chId] = { title, serial, content: '' };
-            await db.ref('notes/characters/' + notesCurrentCharId + '/chapters/' + chId).set({ title, serial, content: '' });
+            const chId = db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters').push().key;
+            if (!notesData.potentialScenes[notesCurrentPsCharId].chapters) notesData.potentialScenes[notesCurrentPsCharId].chapters = {};
+            notesData.potentialScenes[notesCurrentPsCharId].chapters[chId] = { title, serial, content: '' };
+            await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + chId).set({ title, serial, content: '' });
             closeModal('modal-add-potential-chapter');
             notesCurrentChId = chId;
-            loadPotentialChapterEditor();
+            openPotentialChapterEditor(notesCurrentPsCharId, chId);
             renderNotesNav();
         }
 
-        function selectPotentialChapter(charId, chId) {
-            notesCurrentCharId = charId;
-            notesCurrentChId = chId;
-            notesUnsavedFlag = false;
-            loadPotentialChapterEditor();
-            renderNotesNav();
-        }
-
-        function loadPotentialChapterEditor() {
-            if (!notesCurrentCharId || !notesCurrentChId) return;
-            const chData = notesData.characters[notesCurrentCharId]?.chapters?.[notesCurrentChId];
-            if (!chData) return;
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
-            document.getElementById('notes-editor-content').style.display = 'flex';
-            document.getElementById('notes-editor-title').value = chData.title || '';
-            document.getElementById('notes-editor-body').innerHTML = chData.content || '';
-            document.getElementById('notes-save-status').textContent = 'Saved';
-            notesUnsavedFlag = false;
-        }
-
-        function openEditPotentialChapter(charId, chId) {
-            const chData = notesData.characters[charId]?.chapters?.[chId];
+        function openEditPotentialChapter(psId, chId) {
+            const chData = notesData.potentialScenes[psId]?.chapters?.[chId];
             if (!chData) return;
             document.getElementById('edit-pc-key').value = chId;
+            document.getElementById('edit-pc-key').dataset.psId = psId;
             document.getElementById('edit-pc-title').value = chData.title || '';
             document.getElementById('edit-pc-serial').value = chData.serial || 1;
-            // Store charId temporarily
-            document.getElementById('edit-pc-key').dataset.charId = charId;
             openModal('modal-edit-potential-chapter');
         }
 
         async function savePotentialChapterMeta() {
             const chId = document.getElementById('edit-pc-key').value;
-            const charId = document.getElementById('edit-pc-key').dataset.charId;
+            const psId = document.getElementById('edit-pc-key').dataset.psId;
             const title = document.getElementById('edit-pc-title').value.trim() || 'Untitled';
             const serial = parseInt(document.getElementById('edit-pc-serial').value) || 1;
-            notesData.characters[charId].chapters[chId].title = title;
-            notesData.characters[charId].chapters[chId].serial = serial;
-            await db.ref('notes/characters/' + charId + '/chapters/' + chId).update({ title, serial });
-            if (notesCurrentChId === chId) {
-                document.getElementById('notes-editor-title').value = title;
-            }
+            notesData.potentialScenes[psId].chapters[chId].title = title;
+            notesData.potentialScenes[psId].chapters[chId].serial = serial;
+            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).update({ title, serial });
+            if (notesCurrentChId === chId) document.getElementById('notes-editor-title').value = title;
             closeModal('modal-edit-potential-chapter');
+            showPotentialChaptersList();
             renderNotesNav();
         }
 
-        async function deletePotentialChapter(charId, chId) {
+        async function deletePotentialChapter(psId, chId) {
             if (!confirm('Delete this potential chapter?')) return;
-            delete notesData.characters[charId].chapters[chId];
-            await db.ref('notes/characters/' + charId + '/chapters/' + chId).remove();
-            if (notesCurrentChId === chId) {
-                notesCurrentChId = null;
-                document.getElementById('notes-editor-content').style.display = 'none';
-                document.getElementById('notes-empty').style.display = '';
-            }
+            delete notesData.potentialScenes[psId].chapters[chId];
+            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).remove();
+            if (notesCurrentChId === chId) { notesCurrentChId = null; hideAllNotesViews(); showPotentialChaptersList(); }
+            else showPotentialChaptersList();
             renderNotesNav();
         }
 
-        /* ── Nations ── */
-        function openAddNation() {
-            document.getElementById('modal-add-character-title').textContent = 'Add Nation';
-            document.getElementById('new-character-name').value = '';
-            document.getElementById('add-character-error').textContent = '';
-            openModal('modal-add-character');
-            // Override the add button behavior temporarily
-            document.querySelector('#modal-add-character .btn-accent').onclick = addNation;
-        }
-
-        async function addNation() {
-            const name = document.getElementById('new-character-name').value.trim();
-            if (!name) { document.getElementById('add-character-error').textContent = 'Name required.'; return; }
-            const nationId = db.ref('notes/nations').push().key;
-            notesData.nations[nationId] = { name, content: '' };
-            await db.ref('notes/nations/' + nationId).set({ name, content: '' });
-            closeModal('modal-add-character');
-            document.querySelector('#modal-add-character .btn-accent').onclick = addCharacter;
-            notesCurrentNationId = nationId;
-            loadNationEditor();
-            renderNotesNav();
-        }
-
-        function selectNation(nationId) {
-            notesCurrentNationId = nationId;
-            notesCurrentCharId = null;
-            notesCurrentChId = null;
-            notesCurrentReligionId = null;
-            notesCurrentWbId = null;
+        /* ── Character Profile Editor ── */
+        function loadCharacterProfileEditor() {
+            if (!notesCurrentCharId) return;
+            const data = notesData.characters[notesCurrentCharId];
+            if (!data) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = data.name || '';
+            document.getElementById('notes-editor-body').innerHTML = data.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
             notesUnsavedFlag = false;
-            loadNationEditor();
-            renderNotesNav();
         }
 
+        /* ── Nation Editor ── */
         function loadNationEditor() {
             if (!notesCurrentNationId) return;
             const data = notesData.nations[notesCurrentNationId];
             if (!data) return;
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
+            hideAllNotesViews();
             document.getElementById('notes-editor-content').style.display = 'flex';
             document.getElementById('notes-editor-title').value = data.name || '';
             document.getElementById('notes-editor-body').innerHTML = data.content || '';
@@ -2011,57 +1956,12 @@
             notesUnsavedFlag = false;
         }
 
-        async function deleteNation(nationId) {
-            if (!confirm('Delete this nation?')) return;
-            delete notesData.nations[nationId];
-            await db.ref('notes/nations/' + nationId).remove();
-            if (notesCurrentNationId === nationId) {
-                notesCurrentNationId = null;
-                document.getElementById('notes-editor-content').style.display = 'none';
-                document.getElementById('notes-empty').style.display = '';
-            }
-            renderNotesNav();
-        }
-
-        /* ── Religions ── */
-        function openAddReligion() {
-            document.getElementById('modal-add-character-title').textContent = 'Add Religion';
-            document.getElementById('new-character-name').value = '';
-            document.getElementById('add-character-error').textContent = '';
-            openModal('modal-add-character');
-            document.querySelector('#modal-add-character .btn-accent').onclick = addReligion;
-        }
-
-        async function addReligion() {
-            const name = document.getElementById('new-character-name').value.trim();
-            if (!name) { document.getElementById('add-character-error').textContent = 'Name required.'; return; }
-            const religionId = db.ref('notes/religions').push().key;
-            notesData.religions[religionId] = { name, content: '' };
-            await db.ref('notes/religions/' + religionId).set({ name, content: '' });
-            closeModal('modal-add-character');
-            document.querySelector('#modal-add-character .btn-accent').onclick = addCharacter;
-            notesCurrentReligionId = religionId;
-            loadReligionEditor();
-            renderNotesNav();
-        }
-
-        function selectReligion(religionId) {
-            notesCurrentReligionId = religionId;
-            notesCurrentCharId = null;
-            notesCurrentChId = null;
-            notesCurrentNationId = null;
-            notesCurrentWbId = null;
-            notesUnsavedFlag = false;
-            loadReligionEditor();
-            renderNotesNav();
-        }
-
+        /* ── Religion Editor ── */
         function loadReligionEditor() {
             if (!notesCurrentReligionId) return;
             const data = notesData.religions[notesCurrentReligionId];
             if (!data) return;
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
+            hideAllNotesViews();
             document.getElementById('notes-editor-content').style.display = 'flex';
             document.getElementById('notes-editor-title').value = data.name || '';
             document.getElementById('notes-editor-body').innerHTML = data.content || '';
@@ -2069,57 +1969,12 @@
             notesUnsavedFlag = false;
         }
 
-        async function deleteReligion(religionId) {
-            if (!confirm('Delete this religion?')) return;
-            delete notesData.religions[religionId];
-            await db.ref('notes/religions/' + religionId).remove();
-            if (notesCurrentReligionId === religionId) {
-                notesCurrentReligionId = null;
-                document.getElementById('notes-editor-content').style.display = 'none';
-                document.getElementById('notes-empty').style.display = '';
-            }
-            renderNotesNav();
-        }
-
-        /* ── Worldbuilding ── */
-        function openAddWorldbuilding() {
-            document.getElementById('modal-add-character-title').textContent = 'Add Worldbuilding Reference';
-            document.getElementById('new-character-name').value = '';
-            document.getElementById('add-character-error').textContent = '';
-            openModal('modal-add-character');
-            document.querySelector('#modal-add-character .btn-accent').onclick = addWorldbuilding;
-        }
-
-        async function addWorldbuilding() {
-            const name = document.getElementById('new-character-name').value.trim();
-            if (!name) { document.getElementById('add-character-error').textContent = 'Name required.'; return; }
-            const wbId = db.ref('notes/worldbuilding').push().key;
-            notesData.worldbuilding[wbId] = { name, content: '' };
-            await db.ref('notes/worldbuilding/' + wbId).set({ name, content: '' });
-            closeModal('modal-add-character');
-            document.querySelector('#modal-add-character .btn-accent').onclick = addCharacter;
-            notesCurrentWbId = wbId;
-            loadWorldbuildingEditor();
-            renderNotesNav();
-        }
-
-        function selectWorldbuilding(wbId) {
-            notesCurrentWbId = wbId;
-            notesCurrentCharId = null;
-            notesCurrentChId = null;
-            notesCurrentNationId = null;
-            notesCurrentReligionId = null;
-            notesUnsavedFlag = false;
-            loadWorldbuildingEditor();
-            renderNotesNav();
-        }
-
+        /* ── Worldbuilding Editor ── */
         function loadWorldbuildingEditor() {
             if (!notesCurrentWbId) return;
             const data = notesData.worldbuilding[notesCurrentWbId];
             if (!data) return;
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
+            hideAllNotesViews();
             document.getElementById('notes-editor-content').style.display = 'flex';
             document.getElementById('notes-editor-title').value = data.name || '';
             document.getElementById('notes-editor-body').innerHTML = data.content || '';
@@ -2127,22 +1982,9 @@
             notesUnsavedFlag = false;
         }
 
-        async function deleteWorldbuilding(wbId) {
-            if (!confirm('Delete this worldbuilding reference?')) return;
-            delete notesData.worldbuilding[wbId];
-            await db.ref('notes/worldbuilding/' + wbId).remove();
-            if (notesCurrentWbId === wbId) {
-                notesCurrentWbId = null;
-                document.getElementById('notes-editor-content').style.display = 'none';
-                document.getElementById('notes-empty').style.display = '';
-            }
-            renderNotesNav();
-        }
-
         /* ── Overall Story ── */
         function loadOverallStoryEditor() {
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
+            hideAllNotesViews();
             document.getElementById('notes-editor-content').style.display = 'flex';
             document.getElementById('notes-editor-title').value = 'Overall Story';
             document.getElementById('notes-editor-title').readOnly = true;
@@ -2153,31 +1995,34 @@
 
         /* ── Timeline ── */
         function loadTimelineView() {
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-editor-content').style.display = 'none';
+            hideAllNotesViews();
             document.getElementById('notes-timeline-view').style.display = 'flex';
-            document.getElementById('timeline-era-name').value = notesData.timeline.eraName || 'BC/AD';
-            document.getElementById('timeline-era-suffix').value = notesData.timeline.suffix || 'BC';
+            document.getElementById('timeline-era-positive').value = notesData.timeline.positiveSuffix || 'AD';
+            document.getElementById('timeline-era-negative').value = notesData.timeline.negativeSuffix || 'BC';
             renderTimelineEntries();
             timelineUnsavedFlag = false;
             document.getElementById('timeline-save-status').textContent = '';
         }
 
+        function formatTimelineYear(year) {
+            const posSuffix = notesData.timeline.positiveSuffix || 'AD';
+            const negSuffix = notesData.timeline.negativeSuffix || 'BC';
+            if (year >= 0) return year + ' ' + posSuffix;
+            else return Math.abs(year) + ' ' + negSuffix;
+        }
+
         function renderTimelineEntries() {
             const container = document.getElementById('timeline-entries');
             const entries = notesData.timeline.entries || [];
-            // Sort by year
             const sorted = [...entries].sort((a, b) => (a.year || 0) - (b.year || 0));
             container.innerHTML = '';
             sorted.forEach((entry, idx) => {
                 const div = document.createElement('div');
                 div.className = 'timeline-entry';
                 div.innerHTML = `
-              <span class="timeline-entry-year">${entry.year || ''} ${notesData.timeline.suffix || 'BC'}</span>
+              <span class="timeline-entry-year">${formatTimelineYear(entry.year || 0)}</span>
               <input type="text" class="timeline-entry-text" value="${escHtml(entry.text || '')}" onchange="updateTimelineEntry(${idx}, this.value)" />
-              <span class="timeline-entry-actions">
-                <button class="icon-btn danger" onclick="deleteTimelineEntry(${idx})">✕</button>
-              </span>`;
+              <span class="timeline-entry-actions"><button class="icon-btn danger" onclick="deleteTimelineEntry(${idx})">✕</button></span>`;
                 container.appendChild(div);
             });
         }
@@ -2196,14 +2041,11 @@
         }
 
         function updateTimelineEntry(idx, newText) {
-            // Find the sorted entry
             const entries = notesData.timeline.entries || [];
             const sorted = [...entries].sort((a, b) => (a.year || 0) - (b.year || 0));
             const entry = sorted[idx];
             const origIdx = entries.indexOf(entry);
-            if (origIdx >= 0) {
-                notesData.timeline.entries[origIdx].text = newText;
-            }
+            if (origIdx >= 0) notesData.timeline.entries[origIdx].text = newText;
             timelineUnsavedFlag = true;
             document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
         }
@@ -2213,21 +2055,19 @@
             const sorted = [...entries].sort((a, b) => (a.year || 0) - (b.year || 0));
             const entry = sorted[idx];
             const origIdx = entries.indexOf(entry);
-            if (origIdx >= 0) {
-                notesData.timeline.entries.splice(origIdx, 1);
-            }
+            if (origIdx >= 0) notesData.timeline.entries.splice(origIdx, 1);
             timelineUnsavedFlag = true;
             document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
             renderTimelineEntries();
         }
 
         async function saveTimelineSettings() {
-            const eraName = document.getElementById('timeline-era-name').value.trim() || 'BC/AD';
-            const suffix = document.getElementById('timeline-era-suffix').value.trim() || 'BC';
-            notesData.timeline.eraName = eraName;
-            notesData.timeline.suffix = suffix;
-            await db.ref('notes/timeline/eraName').set(eraName);
-            await db.ref('notes/timeline/suffix').set(suffix);
+            const posSuffix = document.getElementById('timeline-era-positive').value.trim() || 'AD';
+            const negSuffix = document.getElementById('timeline-era-negative').value.trim() || 'BC';
+            notesData.timeline.positiveSuffix = posSuffix;
+            notesData.timeline.negativeSuffix = negSuffix;
+            await db.ref('notes/timeline/positiveSuffix').set(posSuffix);
+            await db.ref('notes/timeline/negativeSuffix').set(negSuffix);
             renderTimelineEntries();
             document.getElementById('timeline-save-status').textContent = 'Era saved ✓';
             setTimeout(() => { if (document.getElementById('timeline-save-status').textContent === 'Era saved ✓') document.getElementById('timeline-save-status').textContent = ''; }, 2000);
@@ -2251,43 +2091,33 @@
         }
 
         /* ── Notes formatting ── */
-        function notesFormat(evt, cmd) {
-            evt.preventDefault();
-            document.execCommand(cmd, false, null);
-        }
-
-        function notesUnsaved() {
-            notesUnsavedFlag = true;
-            document.getElementById('notes-save-status').textContent = 'Unsaved changes';
-        }
+        function notesFormat(evt, cmd) { evt.preventDefault(); document.execCommand(cmd, false, null); }
+        function notesUnsaved() { notesUnsavedFlag = true; document.getElementById('notes-save-status').textContent = 'Unsaved changes'; }
 
         async function saveCurrentNote() {
-            if (notesCurrentCategory === 'characters' && notesCurrentCharId && notesCurrentChId) {
-                const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.characters[notesCurrentCharId].chapters[notesCurrentChId].title = title;
-                notesData.characters[notesCurrentCharId].chapters[notesCurrentChId].content = content;
-                await db.ref('notes/characters/' + notesCurrentCharId + '/chapters/' + notesCurrentChId).update({ title, content });
+            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
+            const content = document.getElementById('notes-editor-body').innerHTML;
+            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                notesData.characters[notesCurrentCharId].name = title;
+                notesData.characters[notesCurrentCharId].content = content;
+                await db.ref('notes/characters/' + notesCurrentCharId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
+                notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].title = title;
+                notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].content = content;
+                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
             } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.nations[notesCurrentNationId].name = name;
+                notesData.nations[notesCurrentNationId].name = title;
                 notesData.nations[notesCurrentNationId].content = content;
-                await db.ref('notes/nations/' + notesCurrentNationId).update({ name, content });
+                await db.ref('notes/nations/' + notesCurrentNationId).update({ name: title, content });
             } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.religions[notesCurrentReligionId].name = name;
+                notesData.religions[notesCurrentReligionId].name = title;
                 notesData.religions[notesCurrentReligionId].content = content;
-                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name, content });
+                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name: title, content });
             } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.worldbuilding[notesCurrentWbId].name = name;
+                notesData.worldbuilding[notesCurrentWbId].name = title;
                 notesData.worldbuilding[notesCurrentWbId].content = content;
-                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name, content });
+                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name: title, content });
             } else if (notesCurrentCategory === 'overallStory') {
-                const content = document.getElementById('notes-editor-body').innerHTML;
                 notesData.overallStory.content = content;
                 await db.ref('notes/overallStory/content').set(content);
             }
@@ -2297,84 +2127,59 @@
         }
 
         async function saveCurrentNoteSilent() {
-            if (notesCurrentCategory === 'characters' && notesCurrentCharId && notesCurrentChId) {
-                const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.characters[notesCurrentCharId].chapters[notesCurrentChId].title = title;
-                notesData.characters[notesCurrentCharId].chapters[notesCurrentChId].content = content;
-                await db.ref('notes/characters/' + notesCurrentCharId + '/chapters/' + notesCurrentChId).update({ title, content });
+            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
+            const content = document.getElementById('notes-editor-body').innerHTML;
+            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                notesData.characters[notesCurrentCharId].name = title;
+                notesData.characters[notesCurrentCharId].content = content;
+                await db.ref('notes/characters/' + notesCurrentCharId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
+                notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].title = title;
+                notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].content = content;
+                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
             } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.nations[notesCurrentNationId].name = name;
+                notesData.nations[notesCurrentNationId].name = title;
                 notesData.nations[notesCurrentNationId].content = content;
-                await db.ref('notes/nations/' + notesCurrentNationId).update({ name, content });
+                await db.ref('notes/nations/' + notesCurrentNationId).update({ name: title, content });
             } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.religions[notesCurrentReligionId].name = name;
+                notesData.religions[notesCurrentReligionId].name = title;
                 notesData.religions[notesCurrentReligionId].content = content;
-                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name, content });
+                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name: title, content });
             } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
-                const name = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-                const content = document.getElementById('notes-editor-body').innerHTML;
-                notesData.worldbuilding[notesCurrentWbId].name = name;
+                notesData.worldbuilding[notesCurrentWbId].name = title;
                 notesData.worldbuilding[notesCurrentWbId].content = content;
-                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name, content });
+                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name: title, content });
             } else if (notesCurrentCategory === 'overallStory') {
-                const content = document.getElementById('notes-editor-body').innerHTML;
                 notesData.overallStory.content = content;
                 await db.ref('notes/overallStory/content').set(content);
             }
             notesUnsavedFlag = false;
         }
 
-        /* ════════════════════════════════════════
-           READER PREFERENCES
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ READER PREFERENCES ════════════════════════════════════════ */
         function loadReaderPrefs() {
             const savedFont = localStorage.getItem('tapestry_font');
             const savedSize = localStorage.getItem('tapestry_size');
             const fontSel = document.getElementById('reader-font-select');
             const sizeRange = document.getElementById('reader-size-range');
-            if (savedFont) {
-                const opts = Array.from(fontSel.options).map(o => o.value);
-                if (opts.includes(savedFont)) fontSel.value = savedFont;
-            }
-            if (savedSize) {
-                sizeRange.value = savedSize;
-                document.getElementById('reader-size-label').textContent = savedSize + 'px';
-            }
+            if (savedFont) { const opts = Array.from(fontSel.options).map(o => o.value); if (opts.includes(savedFont)) fontSel.value = savedFont; }
+            if (savedSize) { sizeRange.value = savedSize; document.getElementById('reader-size-label').textContent = savedSize + 'px'; }
         }
 
-        /* ════════════════════════════════════════
-           PROGRESS BAR + SCROLL TRACKING
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ PROGRESS BAR ════════════════════════════════════════ */
         let _scrollTicking = false;
         let _scrollSaveTimer = null;
 
         function setupScrollListener() {
             const scrollEl = document.getElementById('reader-scroll');
             scrollEl.addEventListener('scroll', function() {
-                if (!_scrollTicking) {
-                    requestAnimationFrame(() => {
-                        liveUpdateProgress();
-                        _scrollTicking = false;
-                    });
-                    _scrollTicking = true;
-                }
+                if (!_scrollTicking) { requestAnimationFrame(() => { liveUpdateProgress(); _scrollTicking = false; }); _scrollTicking = true; }
                 if (currentKey) {
                     clearTimeout(_scrollSaveTimer);
-                    _scrollSaveTimer = setTimeout(() => {
-                        saveProgressToStorage();
-                        if (document.getElementById('reader-homepage').style.display !== 'none') {
-                            renderHomepage();
-                        }
-                    }, 600);
+                    _scrollSaveTimer = setTimeout(() => { saveProgressToStorage(); if (document.getElementById('reader-homepage').style.display !== 'none') renderHomepage(); }, 600);
                 }
             });
         }
-
         function saveProgressToStorage() {
             if (!currentKey) return;
             const scrollEl = document.getElementById('reader-scroll');
@@ -2385,16 +2190,11 @@
             localStorage.setItem('tapestry_scroll_' + currentKey, scrollTop);
             localStorage.setItem('tapestry_progress_' + currentKey, pct);
         }
-
         function flushScrollSave() {
-            if (_scrollSaveTimer) {
-                clearTimeout(_scrollSaveTimer);
-                _scrollSaveTimer = null;
-            }
+            if (_scrollSaveTimer) { clearTimeout(_scrollSaveTimer); _scrollSaveTimer = null; }
             if (!currentKey || document.getElementById('reader-area').style.display === 'none') return;
             saveProgressToStorage();
         }
-
         function liveUpdateProgress() {
             if (!currentKey) return;
             const scrollEl = document.getElementById('reader-scroll');
@@ -2405,7 +2205,6 @@
             document.getElementById('reading-progress-fill').style.width = pct + '%';
             updateMinsLeft(pct);
         }
-
         function updateMinsLeft(pct) {
             if (!currentKey) return;
             const ch = chapters[currentKey];
@@ -2413,50 +2212,30 @@
             const total = readingMins(ch.content);
             const remaining = Math.ceil(total * (1 - pct / 100));
             const el = document.getElementById('reader-mins-left');
-            if (pct >= 100) {
-                el.textContent = 'Finished ✓';
-            } else if (remaining <= 0) {
-                el.textContent = '<1 min left';
-            } else {
-                el.textContent = remaining + ' min' + (remaining !== 1 ? 's' : '') + ' left';
-            }
+            if (pct >= 100) el.textContent = 'Finished ✓';
+            else if (remaining <= 0) el.textContent = '<1 min left';
+            else el.textContent = remaining + ' min' + (remaining !== 1 ? 's' : '') + ' left';
         }
 
-        /* ════════════════════════════════════════
-           SORTED CHAPTERS HELPER
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ SORTED CHAPTERS ════════════════════════════════════════ */
         function sortedChapters() {
-            return Object.entries(chapters)
-                .map(([key, val]) => ({ key, ...val }))
-                .sort((a, b) => (a.serial || 0) - (b.serial || 0));
+            return Object.entries(chapters).map(([key, val]) => ({ key, ...val })).sort((a, b) => (a.serial || 0) - (b.serial || 0));
         }
 
-        /* ════════════════════════════════════════
-           RENDER HOMEPAGE
-        ════════════════════════════════════════ */
+        /* ════════════════════════════════════════ RENDER HOMEPAGE ════════════════════════════════════════ */
         function renderHomepage() {
             document.getElementById('rh-title-display').textContent = bookMeta.title || 'The Book';
             document.getElementById('rh-author-display').textContent = bookMeta.author || '';
             const coverWrap = document.getElementById('rh-cover-wrap');
-            if (bookMeta.coverBase64) {
-                coverWrap.innerHTML = `<img class="rh-cover" src="${bookMeta.coverBase64}" alt="Cover" />`;
-            } else {
-                coverWrap.innerHTML = '';
-            }
+            if (bookMeta.coverBase64) coverWrap.innerHTML = `<img class="rh-cover" src="${bookMeta.coverBase64}" alt="Cover" />`;
+            else coverWrap.innerHTML = '';
             const introEl = document.getElementById('rh-intro-display');
-            if (bookMeta.intro && bookMeta.intro.trim()) {
-                introEl.style.display = '';
-                introEl.innerHTML = bookMeta.intro.split('\n').map(l => `<p style="margin-bottom:0.8em">${escHtml(l)}</p>`).join('');
-            } else {
-                introEl.style.display = 'none';
-            }
+            if (bookMeta.intro && bookMeta.intro.trim()) { introEl.style.display = ''; introEl.innerHTML = bookMeta.intro.split('\n').map(l => `<p style="margin-bottom:0.8em">${escHtml(l)}</p>`).join(''); }
+            else introEl.style.display = 'none';
             const sorted = sortedChapters();
             document.getElementById('rh-read-heading').textContent = sorted.length ? `Read ${bookMeta.title || 'the book'}` : '';
             const rl = document.getElementById('rh-chapter-list');
-            if (!sorted.length) {
-                rl.innerHTML = '<li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li>';
-                return;
-            }
+            if (!sorted.length) { rl.innerHTML = '<li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li>'; return; }
             const lastKey = localStorage.getItem('tapestry_last_chapter');
             rl.innerHTML = '';
             sorted.forEach(ch => {
@@ -2469,24 +2248,12 @@
                 const progressHtml = `<div class="rhi-progress"><div class="rhi-progress-fill" style="width:${progress}%"></div></div>`;
                 const li = document.createElement('li');
                 li.className = 'rh-chapter-item';
-                li.innerHTML = `
-              <span class="rh-ci-num">${ch.serial || ''}</span>
-              <div class="rhi-text">
-                <div class="rhi-top">
-                  <span class="rh-ci-title">${escHtml(ch.title || 'Untitled')}</span>
-                  ${badgeHtml}
-                </div>
-                <span class="rhi-meta">${metaText}</span>
-                ${progressHtml}
-              </div>`;
+                li.innerHTML = `<span class="rh-ci-num">${ch.serial || ''}</span><div class="rhi-text"><div class="rhi-top"><span class="rh-ci-title">${escHtml(ch.title || 'Untitled')}</span>${badgeHtml}</div><span class="rhi-meta">${metaText}</span>${progressHtml}</div>`;
                 li.addEventListener('click', () => selectChapter(ch.key, false, 'right'));
                 rl.appendChild(li);
             });
         }
 
-        /* ════════════════════════════════════════
-           RENDER SIDEBAR LISTS
-        ════════════════════════════════════════ */
         function renderChapterLists() {
             const sorted = sortedChapters();
             const lastKey = localStorage.getItem('tapestry_last_chapter');
@@ -2496,19 +2263,8 @@
                 const wc = wordCount(ch.content);
                 const li = document.createElement('li');
                 li.className = 'chapter-item' + (ch.key === currentKey ? ' active' : '');
-                li.innerHTML = `
-              <span class="chapter-num">${ch.serial || ''}</span>
-              <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}</span>
-              <span class="chapter-rt">${wc.toLocaleString()}w</span>
-              <span class="chapter-actions">
-                <button class="icon-btn" onclick="openEditChapter('${ch.key}')">✎</button>
-                <button class="icon-btn danger" onclick="deleteChapter('${ch.key}')">✕</button>
-              </span>`;
-                li.addEventListener('click', evt => {
-                    if (evt.target.closest('.chapter-actions')) return;
-                    selectChapter(ch.key, true);
-                    closeDrawer('editor');
-                });
+                li.innerHTML = `<span class="chapter-num">${ch.serial || ''}</span><span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}</span><span class="chapter-rt">${wc.toLocaleString()}w</span><span class="chapter-actions"><button class="icon-btn" onclick="openEditChapter('${ch.key}')">✎</button><button class="icon-btn danger" onclick="deleteChapter('${ch.key}')">✕</button></span>`;
+                li.addEventListener('click', evt => { if (evt.target.closest('.chapter-actions')) return; selectChapter(ch.key, true); closeDrawer('editor'); });
                 el.appendChild(li);
             });
             const rl = document.getElementById('reader-chapter-list');
@@ -2519,29 +2275,19 @@
                 const isLast = ch.key === lastKey;
                 const li = document.createElement('li');
                 li.className = 'chapter-item' + (ch.key === currentKey ? ' active' : '');
-                li.innerHTML = `
-              <span class="chapter-num">${ch.serial || ''}</span>
-              <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}${isLast && ch.key !== currentKey ? ' ↩' : ''}</span>
-              <span class="chapter-rt">${progress > 0 ? progress + '%' : rt + 'min'}</span>`;
-                li.addEventListener('click', () => {
-                    selectChapter(ch.key, false, 'right');
-                    closeDrawer('reader');
-                });
+                li.innerHTML = `<span class="chapter-num">${ch.serial || ''}</span><span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}${isLast && ch.key !== currentKey ? ' ↩' : ''}</span><span class="chapter-rt">${progress > 0 ? progress + '%' : rt + 'min'}</span>`;
+                li.addEventListener('click', () => { selectChapter(ch.key, false, 'right'); closeDrawer('reader'); });
                 rl.appendChild(li);
             });
         }
 
-        /* ════════════════════════════════════════
-           SELECT A CHAPTER
-        ════════════════════════════════════════ */
         function selectChapter(key, isEditor, animDir) {
             currentKey = key;
             const ch = chapters[key];
             if (!ch) return;
             if (isEditor) {
                 document.getElementById('editor-empty').style.display = 'none';
-                const area = document.getElementById('editor-area');
-                area.style.display = 'flex';
+                document.getElementById('editor-area').style.display = 'flex';
                 document.getElementById('editor-title-input').value = ch.title || '';
                 document.getElementById('editor-content').innerHTML = ch.content || '';
                 document.getElementById('save-status').textContent = 'Saved';
@@ -2559,30 +2305,21 @@
                 document.getElementById('reading-progress-bar').style.display = 'block';
                 document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
                 document.getElementById('reader-body').innerHTML = ch.content || '<em style="color:var(--muted)">This chapter has no content yet.</em>';
-                const wc = wordCount(ch.content);
-                const rt = readingMins(ch.content);
-                document.getElementById('reader-chapter-meta').textContent = wc.toLocaleString() + ' words · ' + rt + ' min read';
-                applyReaderFont();
-                applyReaderSize();
-                updateChapterNav();
-                if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                    document.activeElement.blur();
-                }
+                document.getElementById('reader-chapter-meta').textContent = wordCount(ch.content).toLocaleString() + ' words · ' + readingMins(ch.content) + ' min read';
+                applyReaderFont(); applyReaderSize(); updateChapterNav();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
                 const savedScroll = parseInt(localStorage.getItem('tapestry_scroll_' + key)) || 0;
                 const savedProgress = clampPct(parseInt(localStorage.getItem('tapestry_progress_' + key)) || 0);
                 if (!localStorage.getItem('tapestry_scroll_' + key) && savedScroll === 0) {
                     localStorage.setItem('tapestry_progress_' + key, 0);
                     localStorage.setItem('tapestry_scroll_' + key, 0);
                 }
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        const scrollEl = document.getElementById('reader-scroll');
-                        scrollEl.scrollTop = savedScroll;
-                        window.scrollTo(0, 0);
-                        document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
-                        updateMinsLeft(savedProgress);
-                    });
-                });
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    document.getElementById('reader-scroll').scrollTop = savedScroll;
+                    window.scrollTo(0, 0);
+                    document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
+                    updateMinsLeft(savedProgress);
+                }));
             }
             renderChapterLists();
         }
@@ -2591,60 +2328,24 @@
             const sorted = sortedChapters();
             const idx = sorted.findIndex(c => c.key === currentKey);
             const isLast = idx === sorted.length - 1;
-            const prevBtn = document.getElementById('nav-prev');
-            const nextBtn = document.getElementById('nav-next');
-            const eob = document.getElementById('end-of-book');
-            if (idx > 0) {
-                prevBtn.classList.remove('disabled');
-                document.getElementById('nav-prev-title').textContent = sorted[idx - 1].title || 'Untitled';
-            } else {
-                prevBtn.classList.add('disabled');
-            }
-            if (!isLast) {
-                nextBtn.classList.remove('disabled');
-                document.getElementById('nav-next-title').textContent = sorted[idx + 1].title || 'Untitled';
-                eob.classList.remove('visible');
-            } else {
-                nextBtn.classList.add('disabled');
-                eob.classList.add('visible');
-            }
+            if (idx > 0) { document.getElementById('nav-prev').classList.remove('disabled'); document.getElementById('nav-prev-title').textContent = sorted[idx - 1].title || 'Untitled'; }
+            else document.getElementById('nav-prev').classList.add('disabled');
+            if (!isLast) { document.getElementById('nav-next').classList.remove('disabled'); document.getElementById('nav-next-title').textContent = sorted[idx + 1].title || 'Untitled'; document.getElementById('end-of-book').classList.remove('visible'); }
+            else { document.getElementById('nav-next').classList.add('disabled'); document.getElementById('end-of-book').classList.add('visible'); }
         }
-
         function navChapter(dir) {
-            if (document.activeElement && typeof document.activeElement.blur === 'function') {
-                document.activeElement.blur();
-            }
+            if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
             const sorted = sortedChapters();
             const idx = sorted.findIndex(c => c.key === currentKey);
             const next = sorted[idx + dir];
             if (next) selectChapter(next.key, false, dir === 1 ? 'right' : 'left');
         }
 
-        /* ════════════════════════════════════════
-           EDITOR FORMATTING + WORD COUNT
-        ════════════════════════════════════════ */
-        function e(evt, cmd) {
-            evt.preventDefault();
-            document.execCommand(cmd, false, null);
-            updateToolbar();
-        }
-        function handleEditorKey() {
-            document.getElementById('save-status').textContent = 'Unsaved changes';
-            updateToolbar();
-        }
-        function handleEditorInput() {
-            document.getElementById('save-status').textContent = 'Unsaved changes';
-            updateEditorWordCount();
-        }
-        function updateToolbar() {
-            ['bold', 'italic', 'underline'].forEach(cmd => {
-                document.getElementById('tb-' + cmd).classList.toggle('active', document.queryCommandState(cmd));
-            });
-        }
-        function updateEditorWordCount() {
-            const wc = wordCount(document.getElementById('editor-content').innerHTML);
-            document.getElementById('editor-wordcount').textContent = wc.toLocaleString() + ' words';
-        }
+        function e(evt, cmd) { evt.preventDefault(); document.execCommand(cmd, false, null); updateToolbar(); }
+        function handleEditorKey() { document.getElementById('save-status').textContent = 'Unsaved changes'; updateToolbar(); }
+        function handleEditorInput() { document.getElementById('save-status').textContent = 'Unsaved changes'; updateEditorWordCount(); }
+        function updateToolbar() { ['bold','italic','underline'].forEach(cmd => document.getElementById('tb-' + cmd).classList.toggle('active', document.queryCommandState(cmd))); }
+        function updateEditorWordCount() { document.getElementById('editor-wordcount').textContent = wordCount(document.getElementById('editor-content').innerHTML).toLocaleString() + ' words'; }
 
         async function saveCurrentChapter() {
             if (!currentKey) return;
@@ -2669,7 +2370,6 @@
             closeModal('modal-add-chapter');
             selectChapter(ref.key, true);
         }
-
         function openEditChapter(key) {
             const ch = chapters[key];
             if (!ch) return;
@@ -2686,19 +2386,14 @@
             if (key === currentKey) document.getElementById('editor-title-input').value = title;
             closeModal('modal-edit-chapter');
         }
-
         async function deleteChapter(key) {
             if (!confirm('Delete this chapter? This cannot be undone.')) return;
             await db.ref('chapters/' + key).remove();
-            if (currentKey === key) {
-                currentKey = null;
-                document.getElementById('editor-empty').style.display = '';
-                document.getElementById('editor-area').style.display = 'none';
-            }
+            if (currentKey === key) { currentKey = null; document.getElementById('editor-empty').style.display = ''; document.getElementById('editor-area').style.display = 'none'; }
         }
 
         function openChangePassword() {
-            ['old-pw', 'new-pw', 'new-pw2'].forEach(id => document.getElementById(id).value = '');
+            ['old-pw','new-pw','new-pw2'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('pw-change-error').textContent = '';
             openModal('modal-change-pw');
         }
@@ -2722,26 +2417,19 @@
             document.getElementById('bs-error').textContent = '';
             pendingCoverFile = null;
             const curWrap = document.getElementById('cover-current-wrap');
-            if (bookMeta.coverBase64) {
-                document.getElementById('cover-current-img').src = bookMeta.coverBase64;
-                curWrap.style.display = '';
-            } else {
-                curWrap.style.display = 'none';
-            }
+            if (bookMeta.coverBase64) { document.getElementById('cover-current-img').src = bookMeta.coverBase64; curWrap.style.display = ''; }
+            else curWrap.style.display = 'none';
             document.getElementById('cover-new-preview-wrap').style.display = 'none';
             document.getElementById('bs-cover-input').value = '';
             openModal('modal-book-settings');
         }
-
         function previewCover(evt) {
             const file = evt.target.files[0];
             if (!file) return;
             pendingCoverFile = file;
-            const url = URL.createObjectURL(file);
-            document.getElementById('cover-new-preview').src = url;
+            document.getElementById('cover-new-preview').src = URL.createObjectURL(file);
             document.getElementById('cover-new-preview-wrap').style.display = '';
         }
-
         async function removeCover() {
             if (!confirm('Remove the current cover image?')) return;
             bookMeta.coverBase64 = '';
@@ -2750,7 +2438,6 @@
             document.getElementById('cover-current-img').src = '';
             applyBookMeta();
         }
-
         async function saveBookSettings() {
             const err = document.getElementById('bs-error');
             err.textContent = 'Saving…';
@@ -2758,30 +2445,14 @@
             bookMeta.author = document.getElementById('bs-author').value.trim();
             bookMeta.intro = document.getElementById('bs-intro').value.trim();
             if (pendingCoverFile) {
-                try {
-                    bookMeta.coverBase64 = await fileToBase64(pendingCoverFile);
-                    pendingCoverFile = null;
-                } catch (e) {
-                    err.textContent = 'Could not read image file.';
-                    return;
-                }
+                try { bookMeta.coverBase64 = await fileToBase64(pendingCoverFile); pendingCoverFile = null; }
+                catch (e) { err.textContent = 'Could not read image file.'; return; }
             }
-            try {
-                await db.ref('meta').update({
-                    title: bookMeta.title,
-                    author: bookMeta.author,
-                    intro: bookMeta.intro,
-                    coverBase64: bookMeta.coverBase64
-                });
-            } catch (e) {
-                err.textContent = 'Save failed: ' + e.message;
-                return;
-            }
-            applyBookMeta();
-            err.textContent = '';
+            try { await db.ref('meta').update({ title: bookMeta.title, author: bookMeta.author, intro: bookMeta.intro, coverBase64: bookMeta.coverBase64 }); }
+            catch (e) { err.textContent = 'Save failed: ' + e.message; return; }
+            applyBookMeta(); err.textContent = '';
             closeModal('modal-book-settings');
         }
-
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -2794,23 +2465,16 @@
         function applyReaderFont() {
             const f = document.getElementById('reader-font-select').value;
             localStorage.setItem('tapestry_font', f);
-            const body = document.getElementById('reader-body');
-            const title = document.getElementById('reader-chapter-title');
-            const intro = document.getElementById('rh-intro-display');
-            body.style.fontFamily = f;
-            title.style.fontFamily = f;
-            intro.style.fontFamily = f;
+            const body = document.getElementById('reader-body'), title = document.getElementById('reader-chapter-title'), intro = document.getElementById('rh-intro-display');
+            body.style.fontFamily = f; title.style.fontFamily = f; intro.style.fontFamily = f;
             body.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
             intro.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
         }
-
         function applyReaderSize() {
             const s = parseInt(document.getElementById('reader-size-range').value);
             localStorage.setItem('tapestry_size', s);
-            const body = document.getElementById('reader-body');
-            const intro = document.getElementById('rh-intro-display');
-            body.style.fontSize = s + 'px';
-            intro.style.fontSize = s + 'px';
+            const body = document.getElementById('reader-body'), intro = document.getElementById('rh-intro-display');
+            body.style.fontSize = s + 'px'; intro.style.fontSize = s + 'px';
             document.getElementById('reader-chapter-title').style.fontSize = (s * 1.8) + 'px';
             document.getElementById('reader-size-label').textContent = s + 'px';
             body.querySelectorAll('*').forEach(el => el.style.fontSize = s + 'px');
@@ -2836,82 +2500,10 @@
         }
 
         function openModal(id) { document.getElementById(id).classList.add('open'); }
-
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
         document.querySelectorAll('.modal-overlay').forEach(el => {
             el.addEventListener('click', evt => { if (evt.target === el) closeModal(el.id); });
         });
-
-        // Override the notes nav to show sub-items for nations, religions, worldbuilding
-        const origRenderNotesNav = renderNotesNav;
-        renderNotesNav = function() {
-            origRenderNotesNav();
-            const nav = document.getElementById('notes-nav-list');
-
-            // Nations sub-list
-            if (notesCurrentCategory === 'nations') {
-                const subList = document.createElement('ul');
-                subList.className = 'notes-sub-list';
-                Object.entries(notesData.nations).forEach(([nationId, data]) => {
-                    const li = document.createElement('li');
-                    li.className = 'notes-sub-item' + (notesCurrentNationId === nationId ? ' active' : '');
-                    li.innerHTML = `
-                  <span onclick="selectNation('${nationId}')" style="flex:1;">${escHtml(data.name || 'Unnamed')}</span>
-                  <span class="sub-actions">
-                    <button class="icon-btn danger" onclick="event.stopPropagation();deleteNation('${nationId}')">✕</button>
-                  </span>`;
-                    subList.appendChild(li);
-                });
-                nav.appendChild(subList);
-            }
-
-            // Religions sub-list
-            if (notesCurrentCategory === 'religions') {
-                const subList = document.createElement('ul');
-                subList.className = 'notes-sub-list';
-                Object.entries(notesData.religions).forEach(([religionId, data]) => {
-                    const li = document.createElement('li');
-                    li.className = 'notes-sub-item' + (notesCurrentReligionId === religionId ? ' active' : '');
-                    li.innerHTML = `
-                  <span onclick="selectReligion('${religionId}')" style="flex:1;">${escHtml(data.name || 'Unnamed')}</span>
-                  <span class="sub-actions">
-                    <button class="icon-btn danger" onclick="event.stopPropagation();deleteReligion('${religionId}')">✕</button>
-                  </span>`;
-                    subList.appendChild(li);
-                });
-                nav.appendChild(subList);
-            }
-
-            // Worldbuilding sub-list
-            if (notesCurrentCategory === 'worldbuilding') {
-                const subList = document.createElement('ul');
-                subList.className = 'notes-sub-list';
-                Object.entries(notesData.worldbuilding).forEach(([wbId, data]) => {
-                    const li = document.createElement('li');
-                    li.className = 'notes-sub-item' + (notesCurrentWbId === wbId ? ' active' : '');
-                    li.innerHTML = `
-                  <span onclick="selectWorldbuilding('${wbId}')" style="flex:1;">${escHtml(data.name || 'Unnamed')}</span>
-                  <span class="sub-actions">
-                    <button class="icon-btn danger" onclick="event.stopPropagation();deleteWorldbuilding('${wbId}')">✕</button>
-                  </span>`;
-                    subList.appendChild(li);
-                });
-                nav.appendChild(subList);
-            }
-        };
-
-        // Add "Add Potential Chapter" button when character is selected
-        const origSelectCharacter = selectCharacter;
-        selectCharacter = function(charId) {
-            origSelectCharacter(charId);
-            // Show add potential chapter option in the empty state
-            const emptyEl = document.getElementById('notes-empty');
-            if (emptyEl.style.display !== 'none') {
-                emptyEl.innerHTML = `
-              <p style="margin-bottom:1.5rem;">Character: <strong>${escHtml(notesData.characters[charId]?.name || 'Unnamed')}</strong></p>
-              <button class="btn-accent" onclick="openAddPotentialChapter()" style="margin-top:0.5rem;">＋ Add Potential Chapter</button>`;
-            }
-        };
 
         bootstrap();
     </script>
