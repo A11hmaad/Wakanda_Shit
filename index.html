@@ -423,22 +423,49 @@
     padding: 4rem 3rem;
   }
 
-  /* ── PAGE TURN ANIMATIONS ── */
-  @keyframes pageFromRight {
-    from { transform: translateX(36px); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
+  /* ── PAGE TURN ANIMATIONS (3-D book flip) ──
+     Next: new page flips in from the right, pivoting on its left edge —
+           exactly like turning a right-hand page forward.
+     Prev: new page flips in from the left, pivoting on its right edge —
+           like turning back.
+     The brightness filter simulates the shadow that sweeps across a
+     physical page as it rotates under the light. ── */
+
+  .reader-content-wrap {
+    will-change: transform, filter;
   }
-  @keyframes pageFromLeft {
-    from { transform: translateX(-36px); opacity: 0; }
-    to   { transform: translateX(0);     opacity: 1; }
+
+  @keyframes flipFromRight {
+    0%   { transform: perspective(1400px) rotateY(55deg)  scaleX(0.92);
+           filter: brightness(0.65); opacity: 0.2; }
+    60%  { filter: brightness(0.9);  opacity: 0.85; }
+    100% { transform: perspective(1400px) rotateY(0deg)   scaleX(1);
+           filter: brightness(1);    opacity: 1; }
+  }
+  @keyframes flipFromLeft {
+    0%   { transform: perspective(1400px) rotateY(-55deg) scaleX(0.92);
+           filter: brightness(0.65); opacity: 0.2; }
+    60%  { filter: brightness(0.9);  opacity: 0.85; }
+    100% { transform: perspective(1400px) rotateY(0deg)   scaleX(1);
+           filter: brightness(1);    opacity: 1; }
   }
   @keyframes pageFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .page-anim-right { animation: pageFromRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-  .page-anim-left  { animation: pageFromLeft  0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-  .page-anim-fade  { animation: pageFadeIn    0.28s ease; }
+
+  /* easeOutQuart — fast flick, soft landing like a page settling */
+  .page-anim-right {
+    transform-origin: left center;
+    animation: flipFromRight 0.52s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  .page-anim-left {
+    transform-origin: right center;
+    animation: flipFromLeft  0.52s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  .page-anim-fade {
+    animation: pageFadeIn 0.3s ease;
+  }
 
   .reader-chapter-heading {
     font-family: var(--serif); font-size: 2.2rem;
@@ -1210,9 +1237,9 @@ function selectChapter(key, isEditor, animDir) {
     else                          wrap.classList.add('page-anim-fade');
 
     // Show chapter area + progress bar
-    document.getElementById('reader-homepage').style.display  = 'none';
-    document.getElementById('reader-area').style.display      = '';
-    document.getElementById('reading-progress-bar').style.display = '';
+    document.getElementById('reader-homepage').style.display       = 'none';
+    document.getElementById('reader-area').style.display           = 'block';
+    document.getElementById('reading-progress-bar').style.display  = 'block';
 
     // Fill content
     document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
