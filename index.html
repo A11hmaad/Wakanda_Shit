@@ -38,11 +38,8 @@
     overflow: hidden;
   }
 
-  /* ── VIEWS ──
-     height (not min-height) + min-height:0 locks these flex
-     containers to the viewport instead of letting them grow with
-     content, so .reader-scroll / .main-pane become the actual
-     scrolling elements instead of the whole page scrolling. */
+  /* height (not min-height) + min-height:0 locks these to the viewport
+     so inner panes (.reader-scroll, .main-pane) are the real scrollers */
   .view { display: none; flex-direction: column; height: 100%; min-height: 0; }
   .view.active { display: flex; }
 
@@ -53,6 +50,7 @@
     text-align: center;
     padding: 2rem;
     gap: 3rem;
+    overflow-y: auto;
   }
 
   .landing-title {
@@ -213,6 +211,11 @@
     font-family: var(--serif); font-size: 0.95rem;
     flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* Sidebar reading-time label */
+  .chapter-rt {
+    font-family: var(--sans); font-size: 0.65rem; color: var(--muted);
+    white-space: nowrap; margin-left: auto; padding-left: 0.4rem;
+  }
   .chapter-actions { display: flex; gap: 0.2rem; opacity: 0; transition: opacity 0.15s; }
   .chapter-item:hover .chapter-actions,
   .chapter-item.active .chapter-actions { opacity: 1; }
@@ -273,6 +276,24 @@
     border-top: 1px solid var(--rule);
   }
   .save-status { font-size: 0.78rem; color: var(--muted); font-family: var(--sans); flex: 1; }
+  #editor-wordcount {
+    font-size: 0.78rem; color: var(--muted); font-family: var(--sans);
+    white-space: nowrap;
+  }
+
+  /* ── READING PROGRESS BAR ── */
+  #reading-progress-bar {
+    height: 3px;
+    background: var(--rule);
+    flex-shrink: 0;
+    display: none;
+  }
+  #reading-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.12s ease;
+  }
 
   /* ── READER ── */
   .reader-controls {
@@ -298,9 +319,6 @@
   .reader-scroll {
     flex: 1; overflow-y: auto; width: 100%;
     min-height: 0;
-    /* Prevent the browser's scroll-anchoring heuristic from
-       re-adjusting our scroll position when chapter content
-       changes height above/within the viewport. */
     overflow-anchor: none;
   }
 
@@ -325,15 +343,6 @@
     border: 1px solid var(--rule);
     box-shadow: 4px 8px 24px rgba(26,23,20,0.15);
     display: block;
-  }
-  .rh-cover-placeholder {
-    width: 200px; height: 280px;
-    border: 1px solid var(--rule);
-    background: var(--ui-bg);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--rule);
-    font-family: var(--serif); font-size: 0.9rem;
-    font-style: italic;
   }
 
   .rh-title {
@@ -364,21 +373,47 @@
     list-style: none; width: 100%; max-width: 480px; text-align: left;
   }
   .rh-chapter-item {
-    display: flex; align-items: baseline; gap: 0.8rem;
-    padding: 0.75rem 0;
+    display: flex; align-items: flex-start; gap: 0.8rem;
+    padding: 0.85rem 0;
     border-bottom: 1px solid var(--rule);
     cursor: pointer;
     transition: color 0.15s;
   }
   .rh-chapter-item:first-child { border-top: 1px solid var(--rule); }
   .rh-chapter-item:hover .rh-ci-title { color: var(--accent); }
+
   .rh-ci-num {
     font-family: var(--serif); font-size: 0.8rem;
-    color: var(--muted); min-width: 1.5rem;
+    color: var(--muted); min-width: 1.5rem; padding-top: 0.15rem;
+  }
+  .rhi-text {
+    flex: 1; display: flex; flex-direction: column; gap: 0.3rem; overflow: hidden;
+  }
+  .rhi-top {
+    display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
   }
   .rh-ci-title {
     font-family: var(--serif); font-size: 1.05rem;
     color: var(--ink); transition: color 0.15s;
+  }
+  .rhi-here-badge {
+    font-family: var(--sans); font-size: 0.6rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent);
+    padding: 0.1rem 0.45rem; white-space: nowrap; flex-shrink: 0;
+  }
+  .rhi-meta {
+    font-family: var(--sans); font-size: 0.7rem;
+    color: var(--muted); letter-spacing: 0.04em;
+  }
+  .rhi-progress {
+    height: 2px; background: var(--rule);
+    border-radius: 1px; width: 100%; max-width: 220px;
+    margin-top: 0.15rem;
+  }
+  .rhi-progress-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 1px; min-width: 3px;
   }
 
   /* ── READER CHAPTER AREA ── */
@@ -388,11 +423,38 @@
     padding: 4rem 3rem;
   }
 
+  /* ── PAGE TURN ANIMATIONS ── */
+  @keyframes pageFromRight {
+    from { transform: translateX(36px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  @keyframes pageFromLeft {
+    from { transform: translateX(-36px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+  @keyframes pageFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .page-anim-right { animation: pageFromRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+  .page-anim-left  { animation: pageFromLeft  0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+  .page-anim-fade  { animation: pageFadeIn    0.28s ease; }
+
   .reader-chapter-heading {
     font-family: var(--serif); font-size: 2.2rem;
     font-weight: 300; letter-spacing: 0.04em;
+    margin-bottom: 1rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* ── CHAPTER META BAR (word count / mins left) ── */
+  .reader-chapter-meta-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--sans); font-size: 0.71rem;
+    color: var(--muted); letter-spacing: 0.06em;
     margin-bottom: 2rem; padding-bottom: 1rem;
     border-bottom: 1px solid var(--rule);
+    flex-wrap: wrap; gap: 0.4rem;
   }
 
   #reader-body {
@@ -495,7 +557,6 @@
   }
   .btn-cancel:hover { border-color: var(--muted); }
 
-  /* Cover preview in modal */
   .cover-preview-wrap { position: relative; display: inline-block; }
   .cover-preview-img {
     width: 120px; height: 168px; object-fit: cover;
@@ -529,9 +590,7 @@
     <div class="landing-title" id="book-title-display">The Book</div>
     <div class="landing-subtitle" id="book-author-display"></div>
   </div>
-
   <div class="landing-divider"></div>
-
   <div class="landing-actions">
     <button class="btn-primary" onclick="enterReader()">Read</button>
     <div style="width:100%;text-align:center;font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);">or</div>
@@ -588,10 +647,12 @@
 
         <div id="editor-content" contenteditable="true"
              onkeydown="handleEditorKey(event)"
+             oninput="handleEditorInput()"
              onmouseup="updateToolbar()" onkeyup="updateToolbar()"></div>
 
         <div class="editor-save-bar">
           <div class="save-status" id="save-status">Unsaved changes</div>
+          <div id="editor-wordcount">0 words</div>
           <button class="btn-accent" onclick="saveCurrentChapter()">Save</button>
         </div>
       </div>
@@ -632,6 +693,11 @@
     </label>
   </div>
 
+  <!-- Reading progress bar — sits between controls and the scroll area -->
+  <div id="reading-progress-bar">
+    <div id="reading-progress-fill"></div>
+  </div>
+
   <div class="drawer-backdrop" id="reader-backdrop" onclick="closeDrawer('reader')"></div>
 
   <div class="app-body">
@@ -644,23 +710,14 @@
 
       <!-- ── HOMEPAGE ── -->
       <div id="reader-homepage">
-        <!-- Cover -->
         <div id="rh-cover-wrap"></div>
-
-        <!-- Title block -->
         <div>
           <div class="rh-title" id="rh-title-display">The Book</div>
           <div class="rh-author" id="rh-author-display"></div>
         </div>
-
         <div class="rh-divider"></div>
-
-        <!-- Introduction -->
         <div class="rh-intro" id="rh-intro-display" style="display:none;"></div>
-
         <div class="rh-divider"></div>
-
-        <!-- Chapter list -->
         <div style="width:100%;max-width:480px;">
           <div class="rh-read-heading" id="rh-read-heading">Read</div>
           <ul class="rh-chapter-list" id="rh-chapter-list">
@@ -673,9 +730,15 @@
       <div id="reader-area" style="display:none;">
         <div class="reader-content-wrap">
           <h2 class="reader-chapter-heading" id="reader-chapter-title"></h2>
+
+          <!-- Word count + mins left bar -->
+          <div class="reader-chapter-meta-bar">
+            <span id="reader-chapter-meta"></span>
+            <span id="reader-mins-left"></span>
+          </div>
+
           <div id="reader-body"></div>
 
-          <!-- Prev / Next navigation -->
           <div class="chapter-nav" id="chapter-nav">
             <button class="chapter-nav-btn prev disabled" id="nav-prev" onclick="navChapter(-1)">
               <span class="nav-label">← Previous</span>
@@ -687,7 +750,6 @@
             </button>
           </div>
 
-          <!-- End of book -->
           <div class="end-of-book" id="end-of-book">
             <div class="end-ornament">∗ &nbsp; ∗ &nbsp; ∗</div>
             <div class="end-text">
@@ -705,8 +767,6 @@
 <!-- ═══════════════════════════════════════
      MODALS
 ═══════════════════════════════════════ -->
-
-<!-- Add chapter -->
 <div class="modal-overlay" id="modal-add-chapter">
   <div class="modal">
     <h2>New chapter</h2>
@@ -720,7 +780,6 @@
   </div>
 </div>
 
-<!-- Edit chapter meta -->
 <div class="modal-overlay" id="modal-edit-chapter">
   <div class="modal">
     <h2>Edit chapter</h2>
@@ -734,7 +793,6 @@
   </div>
 </div>
 
-<!-- Change password -->
 <div class="modal-overlay" id="modal-change-pw">
   <div class="modal">
     <h2>Change password</h2>
@@ -749,24 +807,20 @@
   </div>
 </div>
 
-<!-- Book settings (title + author + intro + cover) -->
 <div class="modal-overlay" id="modal-book-settings">
   <div class="modal">
     <h2>Book settings</h2>
     <label>Title <input type="text" id="bs-title" placeholder="My Novel" /></label>
     <label>Author / subtitle <input type="text" id="bs-author" placeholder="by Author Name" /></label>
-
     <label style="flex-direction:column;gap:0.6rem;">
       Introduction (shown on homepage)
       <textarea id="bs-intro" rows="5" style="
         padding:0.65rem 0.9rem;border:1px solid var(--rule);
         background:var(--paper);font-family:var(--serif);
         font-size:0.95rem;color:var(--ink);outline:none;
-        resize:vertical;line-height:1.6;
-        transition:border-color 0.15s;
+        resize:vertical;line-height:1.6;transition:border-color 0.15s;
       " placeholder="A few words about this story…"></textarea>
     </label>
-
     <label style="gap:0.8rem;">
       Cover image
       <div id="cover-current-wrap" style="display:none;">
@@ -782,7 +836,6 @@
         <p style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;font-family:var(--sans);">New cover (not saved yet)</p>
       </div>
     </label>
-
     <div class="error-msg" id="bs-error"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-book-settings')">Cancel</button>
@@ -816,7 +869,29 @@ let storedPassword = "HambaHamba";
 let bookMeta = { title: "The Tapestry", author: "", intro: "", coverBase64: "" };
 let pendingCoverFile = null;
 
-/* ── Bootstrap ── */
+/* ════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+
+function wordCount(html) {
+  const text = (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!text) return 0;
+  return text.split(' ').filter(w => w.length > 0).length;
+}
+
+function readingMins(html) {
+  return Math.max(1, Math.ceil(wordCount(html) / 200));
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════════
+   BOOTSTRAP
+════════════════════════════════════════ */
 async function bootstrap() {
   const metaSnap = await db.ref('meta').get();
   if (metaSnap.exists()) {
@@ -834,6 +909,8 @@ async function bootstrap() {
     renderChapterLists();
     renderHomepage();
   });
+
+  setupScrollListener();
 }
 
 function applyBookMeta() {
@@ -845,7 +922,9 @@ function applyBookMeta() {
   renderHomepage();
 }
 
-/* ── Views ── */
+/* ════════════════════════════════════════
+   VIEWS
+════════════════════════════════════════ */
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -862,6 +941,7 @@ function exitToLanding() {
 function enterReader() {
   editorMode = false; currentKey = null;
   showView('v-reader');
+  loadReaderPrefs();   // restore saved font / size
   showHomepage();
   renderChapterLists();
 }
@@ -869,9 +949,10 @@ function enterReader() {
 function showHomepage() {
   document.getElementById('reader-homepage').style.display = '';
   document.getElementById('reader-area').style.display = 'none';
+  document.getElementById('reading-progress-bar').style.display = 'none';
   currentKey = null;
-  // de-highlight sidebar
-  document.querySelectorAll('#reader-chapter-list .chapter-item').forEach(li => li.classList.remove('active'));
+  document.querySelectorAll('#reader-chapter-list .chapter-item')
+    .forEach(li => li.classList.remove('active'));
 }
 
 function tryLogin() {
@@ -886,16 +967,97 @@ function tryLogin() {
   }
 }
 
-/* ── Sorted chapters helper ── */
+/* ════════════════════════════════════════
+   READER PREFERENCES (localStorage)
+════════════════════════════════════════ */
+function loadReaderPrefs() {
+  const savedFont = localStorage.getItem('tapestry_font');
+  const savedSize = localStorage.getItem('tapestry_size');
+  const fontSel   = document.getElementById('reader-font-select');
+  const sizeRange = document.getElementById('reader-size-range');
+
+  if (savedFont) {
+    // Match the saved value against available options
+    const opts = Array.from(fontSel.options).map(o => o.value);
+    if (opts.includes(savedFont)) fontSel.value = savedFont;
+  }
+  if (savedSize) {
+    sizeRange.value = savedSize;
+    document.getElementById('reader-size-label').textContent = savedSize + 'px';
+  }
+}
+
+/* ════════════════════════════════════════
+   PROGRESS BAR + SCROLL TRACKING
+════════════════════════════════════════ */
+let _scrollTicking = false;
+let _scrollSaveTimer = null;
+
+function setupScrollListener() {
+  const scrollEl = document.getElementById('reader-scroll');
+
+  scrollEl.addEventListener('scroll', function () {
+    // Live update on rAF (smooth, no jank)
+    if (!_scrollTicking) {
+      requestAnimationFrame(() => {
+        liveUpdateProgress();
+        _scrollTicking = false;
+      });
+      _scrollTicking = true;
+    }
+
+    // Debounced save to localStorage
+    if (currentKey) {
+      clearTimeout(_scrollSaveTimer);
+      _scrollSaveTimer = setTimeout(() => {
+        const scrollTop    = scrollEl.scrollTop;
+        const scrollHeight = scrollEl.scrollHeight - scrollEl.clientHeight;
+        const pct = scrollHeight > 0 ? Math.round(scrollTop / scrollHeight * 100) : 0;
+        localStorage.setItem('tapestry_scroll_'   + currentKey, scrollTop);
+        localStorage.setItem('tapestry_progress_' + currentKey, pct);
+        // Refresh homepage list progress indicators if homepage is visible
+        if (document.getElementById('reader-homepage').style.display !== 'none') {
+          renderHomepage();
+        }
+      }, 600);
+    }
+  });
+}
+
+function liveUpdateProgress() {
+  if (!currentKey) return;
+  const scrollEl    = document.getElementById('reader-scroll');
+  const scrollTop   = scrollEl.scrollTop;
+  const scrollHeight = scrollEl.scrollHeight - scrollEl.clientHeight;
+  const pct = scrollHeight > 0 ? Math.round(scrollTop / scrollHeight * 100) : 0;
+
+  document.getElementById('reading-progress-fill').style.width = pct + '%';
+  updateMinsLeft(pct);
+}
+
+function updateMinsLeft(pct) {
+  if (!currentKey) return;
+  const ch = chapters[currentKey];
+  if (!ch) return;
+  const total     = readingMins(ch.content);
+  const remaining = Math.ceil(total * (1 - pct / 100));
+  const el = document.getElementById('reader-mins-left');
+  el.textContent = remaining <= 0 ? 'Finished ✓' : remaining + ' min' + (remaining !== 1 ? 's' : '') + ' left';
+}
+
+/* ════════════════════════════════════════
+   SORTED CHAPTERS HELPER
+════════════════════════════════════════ */
 function sortedChapters() {
   return Object.entries(chapters)
     .map(([key, val]) => ({ key, ...val }))
     .sort((a, b) => (a.serial || 0) - (b.serial || 0));
 }
 
-/* ── Render homepage ── */
+/* ════════════════════════════════════════
+   RENDER HOMEPAGE
+════════════════════════════════════════ */
 function renderHomepage() {
-  // Title / author
   document.getElementById('rh-title-display').textContent  = bookMeta.title  || 'The Book';
   document.getElementById('rh-author-display').textContent = bookMeta.author || '';
 
@@ -911,48 +1073,78 @@ function renderHomepage() {
   const introEl = document.getElementById('rh-intro-display');
   if (bookMeta.intro && bookMeta.intro.trim()) {
     introEl.style.display = '';
-    // Preserve line breaks
-    introEl.innerHTML = bookMeta.intro.split('\n').map(l => `<p style="margin-bottom:0.8em">${escHtml(l)}</p>`).join('');
+    introEl.innerHTML = bookMeta.intro.split('\n')
+      .map(l => `<p style="margin-bottom:0.8em">${escHtml(l)}</p>`).join('');
   } else {
     introEl.style.display = 'none';
   }
 
-  // Read heading
   const sorted = sortedChapters();
   document.getElementById('rh-read-heading').textContent =
     sorted.length ? `Read ${bookMeta.title || 'the book'}` : '';
 
-  // Chapter list on homepage
   const rl = document.getElementById('rh-chapter-list');
   if (!sorted.length) {
     rl.innerHTML = '<li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li>';
     return;
   }
+
+  const lastKey = localStorage.getItem('tapestry_last_chapter');
+
   rl.innerHTML = '';
   sorted.forEach(ch => {
+    const progress = parseInt(localStorage.getItem('tapestry_progress_' + ch.key)) || 0;
+    const rt       = readingMins(ch.content);
+    const isLast   = ch.key === lastKey;
+
+    // Meta line: reading time + progress if any
+    let metaText = rt + ' min read';
+    if (progress > 0) metaText += ' · ' + progress + '% read';
+
+    const badgeHtml = isLast
+      ? `<span class="rhi-here-badge">↩ You were here</span>`
+      : '';
+
+    const progressHtml = progress > 0
+      ? `<div class="rhi-progress"><div class="rhi-progress-fill" style="width:${progress}%"></div></div>`
+      : '';
+
     const li = document.createElement('li');
     li.className = 'rh-chapter-item';
-    li.innerHTML = `<span class="rh-ci-num">${ch.serial || ''}</span><span class="rh-ci-title">${escHtml(ch.title || 'Untitled')}</span>`;
-    li.addEventListener('click', () => {
-      selectChapter(ch.key, false);
-    });
+    li.innerHTML = `
+      <span class="rh-ci-num">${ch.serial || ''}</span>
+      <div class="rhi-text">
+        <div class="rhi-top">
+          <span class="rh-ci-title">${escHtml(ch.title || 'Untitled')}</span>
+          ${badgeHtml}
+        </div>
+        <span class="rhi-meta">${metaText}</span>
+        ${progressHtml}
+      </div>`;
+
+    li.addEventListener('click', () => selectChapter(ch.key, false, 'fade'));
     rl.appendChild(li);
   });
 }
 
-/* ── Render sidebar lists ── */
+/* ════════════════════════════════════════
+   RENDER SIDEBAR LISTS
+════════════════════════════════════════ */
 function renderChapterLists() {
-  const sorted = sortedChapters();
+  const sorted  = sortedChapters();
+  const lastKey = localStorage.getItem('tapestry_last_chapter');
 
   // Editor sidebar
   const el = document.getElementById('editor-chapter-list');
   el.innerHTML = '';
   sorted.forEach(ch => {
+    const wc = wordCount(ch.content);
     const li = document.createElement('li');
     li.className = 'chapter-item' + (ch.key === currentKey ? ' active' : '');
     li.innerHTML = `
       <span class="chapter-num">${ch.serial || ''}</span>
       <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}</span>
+      <span class="chapter-rt">${wc.toLocaleString()}w</span>
       <span class="chapter-actions">
         <button class="icon-btn" onclick="openEditChapter('${ch.key}')">✎</button>
         <button class="icon-btn danger" onclick="deleteChapter('${ch.key}')">✕</button>
@@ -969,21 +1161,29 @@ function renderChapterLists() {
   const rl = document.getElementById('reader-chapter-list');
   rl.innerHTML = '';
   sorted.forEach(ch => {
+    const rt       = readingMins(ch.content);
+    const progress = parseInt(localStorage.getItem('tapestry_progress_' + ch.key)) || 0;
+    const isLast   = ch.key === lastKey;
+
     const li = document.createElement('li');
     li.className = 'chapter-item' + (ch.key === currentKey ? ' active' : '');
     li.innerHTML = `
       <span class="chapter-num">${ch.serial || ''}</span>
-      <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}</span>`;
+      <span class="chapter-title-text">${escHtml(ch.title || 'Untitled')}${isLast && ch.key !== currentKey ? ' ↩' : ''}</span>
+      <span class="chapter-rt">${progress > 0 ? progress + '%' : rt + 'min'}</span>`;
     li.addEventListener('click', () => {
-      selectChapter(ch.key, false);
+      selectChapter(ch.key, false, 'fade');
       closeDrawer('reader');
     });
     rl.appendChild(li);
   });
 }
 
-/* ── Select a chapter ── */
-function selectChapter(key, isEditor) {
+/* ════════════════════════════════════════
+   SELECT A CHAPTER
+   animDir: 'right' | 'left' | 'fade' | undefined
+════════════════════════════════════════ */
+function selectChapter(key, isEditor, animDir) {
   currentKey = key;
   const ch = chapters[key];
   if (!ch) return;
@@ -992,38 +1192,59 @@ function selectChapter(key, isEditor) {
     document.getElementById('editor-empty').style.display = 'none';
     const area = document.getElementById('editor-area');
     area.style.display = 'flex';
-    document.getElementById('editor-title-input').value = ch.title || '';
-    document.getElementById('editor-content').innerHTML = ch.content || '';
-    document.getElementById('save-status').textContent = 'Saved';
-  } else {
-    // Hide homepage, show chapter
-    document.getElementById('reader-homepage').style.display = 'none';
-    const area = document.getElementById('reader-area');
-    area.style.display = '';
+    document.getElementById('editor-title-input').value    = ch.title   || '';
+    document.getElementById('editor-content').innerHTML    = ch.content || '';
+    document.getElementById('save-status').textContent     = 'Saved';
+    updateEditorWordCount();
 
+  } else {
+    // Save as last-read chapter
+    localStorage.setItem('tapestry_last_chapter', key);
+
+    // ── Page-turn animation ──
+    const wrap = document.querySelector('.reader-content-wrap');
+    wrap.classList.remove('page-anim-right', 'page-anim-left', 'page-anim-fade');
+    void wrap.offsetWidth;                          // force reflow before re-adding
+    if      (animDir === 'right') wrap.classList.add('page-anim-right');
+    else if (animDir === 'left')  wrap.classList.add('page-anim-left');
+    else                          wrap.classList.add('page-anim-fade');
+
+    // Show chapter area + progress bar
+    document.getElementById('reader-homepage').style.display  = 'none';
+    document.getElementById('reader-area').style.display      = '';
+    document.getElementById('reading-progress-bar').style.display = '';
+
+    // Fill content
     document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
     document.getElementById('reader-body').innerHTML =
       ch.content || '<em style="color:var(--muted)">This chapter has no content yet.</em>';
+
+    // Chapter meta bar
+    const wc = wordCount(ch.content);
+    const rt = readingMins(ch.content);
+    document.getElementById('reader-chapter-meta').textContent =
+      wc.toLocaleString() + ' words · ' + rt + ' min read';
 
     applyReaderFont();
     applyReaderSize();
     updateChapterNav();
 
-    // Remove focus from whatever element triggered this (a nav button
-    // or a chapter-list <li>) so the browser doesn't try to auto-scroll
-    // the container back to keep that element in view once the layout
-    // shifts to the new (shorter/taller) chapter content.
+    // Blur focused element so browser doesn't re-scroll to it
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
       document.activeElement.blur();
     }
 
-    // Reset scroll position after layout has fully settled. A plain
-    // setTimeout(...,0) can run *before* the browser's own focus-driven
-    // scroll adjustment, so we wait two animation frames instead.
+    // Restore saved scroll position (or go to top for new chapters)
+    const savedScroll    = parseInt(localStorage.getItem('tapestry_scroll_'   + key)) || 0;
+    const savedProgress  = parseInt(localStorage.getItem('tapestry_progress_' + key)) || 0;
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        document.getElementById('reader-scroll').scrollTop = 0;
+        const scrollEl = document.getElementById('reader-scroll');
+        scrollEl.scrollTop = savedScroll;
         window.scrollTo(0, 0);
+        document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
+        updateMinsLeft(savedProgress);
       });
     });
   }
@@ -1031,10 +1252,12 @@ function selectChapter(key, isEditor) {
   renderChapterLists();
 }
 
-/* ── Prev / Next nav ── */
+/* ════════════════════════════════════════
+   PREV / NEXT NAV
+════════════════════════════════════════ */
 function updateChapterNav() {
   const sorted = sortedChapters();
-  const idx = sorted.findIndex(c => c.key === currentKey);
+  const idx    = sorted.findIndex(c => c.key === currentKey);
   const isLast = idx === sorted.length - 1;
 
   const prevBtn = document.getElementById('nav-prev');
@@ -1059,18 +1282,18 @@ function updateChapterNav() {
 }
 
 function navChapter(dir) {
-  // Blur the nav button immediately so it can't pull scroll focus
-  // back to itself once the new chapter content is rendered.
   if (document.activeElement && typeof document.activeElement.blur === 'function') {
     document.activeElement.blur();
   }
   const sorted = sortedChapters();
-  const idx = sorted.findIndex(c => c.key === currentKey);
-  const next = sorted[idx + dir];
-  if (next) selectChapter(next.key, false);
+  const idx    = sorted.findIndex(c => c.key === currentKey);
+  const next   = sorted[idx + dir];
+  if (next) selectChapter(next.key, false, dir === 1 ? 'right' : 'left');
 }
 
-/* ── Editor formatting ── */
+/* ════════════════════════════════════════
+   EDITOR FORMATTING + WORD COUNT
+════════════════════════════════════════ */
 function e(evt, cmd) {
   evt.preventDefault();
   document.execCommand(cmd, false, null);
@@ -1080,14 +1303,24 @@ function handleEditorKey() {
   document.getElementById('save-status').textContent = 'Unsaved changes';
   updateToolbar();
 }
+function handleEditorInput() {
+  document.getElementById('save-status').textContent = 'Unsaved changes';
+  updateEditorWordCount();
+}
 function updateToolbar() {
   ['bold','italic','underline'].forEach(cmd => {
     document.getElementById('tb-' + cmd)
       .classList.toggle('active', document.queryCommandState(cmd));
   });
 }
+function updateEditorWordCount() {
+  const wc = wordCount(document.getElementById('editor-content').innerHTML);
+  document.getElementById('editor-wordcount').textContent = wc.toLocaleString() + ' words';
+}
 
-/* ── Save chapter ── */
+/* ════════════════════════════════════════
+   SAVE CHAPTER
+════════════════════════════════════════ */
 async function saveCurrentChapter() {
   if (!currentKey) return;
   const title   = document.getElementById('editor-title-input').value.trim() || 'Untitled';
@@ -1096,7 +1329,9 @@ async function saveCurrentChapter() {
   document.getElementById('save-status').textContent = 'Saved ✓';
 }
 
-/* ── Add chapter ── */
+/* ════════════════════════════════════════
+   ADD CHAPTER
+════════════════════════════════════════ */
 function openAddChapter() {
   document.getElementById('new-chapter-serial').value = sortedChapters().length + 1;
   document.getElementById('new-chapter-title').value  = '';
@@ -1113,7 +1348,9 @@ async function addChapter() {
   selectChapter(ref.key, true);
 }
 
-/* ── Edit chapter meta ── */
+/* ════════════════════════════════════════
+   EDIT / DELETE CHAPTER META
+════════════════════════════════════════ */
 function openEditChapter(key) {
   const ch = chapters[key];
   if (!ch) return;
@@ -1131,7 +1368,6 @@ async function saveChapterMeta() {
   closeModal('modal-edit-chapter');
 }
 
-/* ── Delete chapter ── */
 async function deleteChapter(key) {
   if (!confirm('Delete this chapter? This cannot be undone.')) return;
   await db.ref('chapters/' + key).remove();
@@ -1142,7 +1378,9 @@ async function deleteChapter(key) {
   }
 }
 
-/* ── Change password ── */
+/* ════════════════════════════════════════
+   CHANGE PASSWORD
+════════════════════════════════════════ */
 function openChangePassword() {
   ['old-pw','new-pw','new-pw2'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pw-change-error').textContent = '';
@@ -1161,7 +1399,9 @@ async function changePassword() {
   closeModal('modal-change-pw');
 }
 
-/* ── Book settings (title, author, intro, cover) ── */
+/* ════════════════════════════════════════
+   BOOK SETTINGS
+════════════════════════════════════════ */
 function openBookSettings() {
   document.getElementById('bs-title').value  = bookMeta.title;
   document.getElementById('bs-author').value = bookMeta.author;
@@ -1169,7 +1409,6 @@ function openBookSettings() {
   document.getElementById('bs-error').textContent = '';
   pendingCoverFile = null;
 
-  // Show current cover if any
   const curWrap = document.getElementById('cover-current-wrap');
   if (bookMeta.coverBase64) {
     document.getElementById('cover-current-img').src = bookMeta.coverBase64;
@@ -1178,10 +1417,8 @@ function openBookSettings() {
     curWrap.style.display = 'none';
   }
 
-  // Clear new preview
   document.getElementById('cover-new-preview-wrap').style.display = 'none';
   document.getElementById('bs-cover-input').value = '';
-
   openModal('modal-book-settings');
 }
 
@@ -1211,7 +1448,6 @@ async function saveBookSettings() {
   bookMeta.author = document.getElementById('bs-author').value.trim();
   bookMeta.intro  = document.getElementById('bs-intro').value.trim();
 
-  // Convert new cover to Base64 if chosen
   if (pendingCoverFile) {
     try {
       bookMeta.coverBase64 = await fileToBase64(pendingCoverFile);
@@ -1248,9 +1484,13 @@ function fileToBase64(file) {
   });
 }
 
-/* ── Reader font / size ── */
+/* ════════════════════════════════════════
+   READER FONT / SIZE  (with localStorage persistence)
+════════════════════════════════════════ */
 function applyReaderFont() {
   const f = document.getElementById('reader-font-select').value;
+  localStorage.setItem('tapestry_font', f);
+
   const body  = document.getElementById('reader-body');
   const title = document.getElementById('reader-chapter-title');
   const intro = document.getElementById('rh-intro-display');
@@ -1262,7 +1502,9 @@ function applyReaderFont() {
 }
 
 function applyReaderSize() {
-  const s    = parseInt(document.getElementById('reader-size-range').value);
+  const s = parseInt(document.getElementById('reader-size-range').value);
+  localStorage.setItem('tapestry_size', s);
+
   const body  = document.getElementById('reader-body');
   const intro = document.getElementById('rh-intro-display');
   body.style.fontSize  = s + 'px';
@@ -1273,7 +1515,9 @@ function applyReaderSize() {
   intro.querySelectorAll('*').forEach(el => el.style.fontSize = s + 'px');
 }
 
-/* ── Drawer ── */
+/* ════════════════════════════════════════
+   DRAWER
+════════════════════════════════════════ */
 function toggleDrawer(which) {
   const sidebar = document.getElementById(which + '-sidebar');
   sidebar.classList.contains('open') ? closeDrawer(which) : openDrawer(which);
@@ -1292,19 +1536,14 @@ function closeDrawer(which) {
   if (h) h.classList.remove('open');
 }
 
-/* ── Modals ── */
+/* ════════════════════════════════════════
+   MODALS
+════════════════════════════════════════ */
 function openModal(id)  { document.getElementById(id).classList.add('open');    }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', evt => { if (evt.target === el) closeModal(el.id); });
 });
-
-/* ── Escape HTML ── */
-function escHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 
 /* ── Start ── */
 bootstrap();
