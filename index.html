@@ -321,26 +321,30 @@
   }
 
   /* ══════════════════════════════════════
-     SOFT 2D SLIDE TRANSITION (enhanced)
-     ══════════════════════════════════════
-     Slower, softer, and much smoother slide + fade.
-  ══════════════════════════════════════ */
+     SOFT 2D SLIDE TRANSITION (updated)
+     ══════════════════════════════════════ */
   #reader-area {
-    transition: opacity 0.72s cubic-bezier(0.32, 0.04, 0.15, 0.98),
-                transform 0.72s cubic-bezier(0.32, 0.04, 0.15, 0.98);
+    transition: opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
     opacity: 1;
-    transform: translateX(0);
-    will-change: transform, opacity; /* helps smoothness */
+    transform: translate(0, 0);
+    will-change: transform, opacity;
   }
-  #reader-area.page-out-left  { opacity: 0; transform: translateX(-48px); }
-  #reader-area.page-out-right { opacity: 0; transform: translateX(48px); }
-  #reader-area.page-in-left   { opacity: 0; transform: translateX(48px); }
-  #reader-area.page-in-right  { opacity: 0; transform: translateX(-48px); }
+
+  /* Horizontal sliding for Prev/Next navigation */
+  #reader-area.page-out-left  { opacity: 0; transform: translateX(-80px); }
+  #reader-area.page-out-right { opacity: 0; transform: translateX(80px); }
+  #reader-area.page-in-left   { opacity: 0; transform: translateX(80px); }
+  #reader-area.page-in-right  { opacity: 0; transform: translateX(-80px); }
+
+  /* Vertical sliding for opening from Homepage / Sidebar */
+  #reader-area.page-in-down   { opacity: 0; transform: translateY(40px); }
 
   @media (prefers-reduced-motion: reduce) {
-    #reader-area { transition: opacity 0.2s ease !important; transform: none !important; }
+    #reader-area { transition: opacity 0.3s ease !important; transform: none !important; }
     #reader-area.page-out-left, #reader-area.page-out-right,
-    #reader-area.page-in-left, #reader-area.page-in-right { transform: none !important; }
+    #reader-area.page-in-left, #reader-area.page-in-right,
+    #reader-area.page-in-down { transform: none !important; }
   }
 
   /* ── READER HOMEPAGE ── */
@@ -589,9 +593,6 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     VIEW: LANDING
-═══════════════════════════════════════ -->
 <div id="v-landing" class="view active">
   <div>
     <div class="landing-title" id="book-title-display">The Book</div>
@@ -609,9 +610,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     VIEW: EDITOR
-═══════════════════════════════════════ -->
 <div id="v-editor" class="view">
   <div class="app-header">
     <div style="display:flex;align-items:center;gap:0.8rem;">
@@ -667,9 +665,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     VIEW: READER
-═══════════════════════════════════════ -->
 <div id="v-reader" class="view">
   <div class="app-header">
     <div style="display:flex;align-items:center;gap:0.8rem;">
@@ -700,7 +695,6 @@
     </label>
   </div>
 
-  <!-- Reading progress bar -->
   <div id="reading-progress-bar">
     <div id="reading-progress-fill"></div>
   </div>
@@ -715,7 +709,6 @@
 
     <div class="reader-scroll" id="reader-scroll">
 
-      <!-- ── HOMEPAGE ── -->
       <div id="reader-homepage">
         <div id="rh-cover-wrap"></div>
         <div>
@@ -733,7 +726,6 @@
         </div>
       </div>
 
-      <!-- ── CHAPTER ── -->
       <div id="reader-area" style="display:none;">
         <div class="reader-content-wrap">
           <h2 class="reader-chapter-heading" id="reader-chapter-title"></h2>
@@ -766,13 +758,9 @@
         </div>
       </div>
 
-    </div><!-- /reader-scroll -->
-  </div>
+    </div></div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     MODALS
-═══════════════════════════════════════ -->
 <div class="modal-overlay" id="modal-add-chapter">
   <div class="modal">
     <h2>New chapter</h2>
@@ -850,9 +838,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════ -->
 <script>
 /* ── Firebase ── */
 const firebaseConfig = {
@@ -1041,8 +1026,8 @@ function sortedChapters() {
 }
 
 /* ════════════════════════════════════════
-   SOFT 2D SLIDE TRANSITION (enhanced)
-   Slower (720ms), softer easing, larger travel distance.
+   SOFT 2D SLIDE TRANSITION (updated)
+   Smoother, slower, softer 2D flat sliding
 ════════════════════════════════════════ */
 
 let _transitionTimer = null;
@@ -1054,32 +1039,45 @@ function runPageTransition(dir, loadNewContent) {
     clearTimeout(_transitionTimer);
     _transitionTimer = null;
   }
-  area.classList.remove('page-out-left', 'page-out-right', 'page-in-left', 'page-in-right');
+  
+  // Clear any lingering animation classes
+  area.classList.remove('page-out-left', 'page-out-right', 'page-in-left', 'page-in-right', 'page-in-down');
 
+  // ── Opening a chapter from the homepage or sidebar ──
   if (dir === 'fade') {
-    loadNewContent();
+    area.classList.add('page-in-down'); // Set starting state (invisible, shifted slightly down)
+    void area.offsetWidth;              // Force reflow so the browser registers the starting position
+    loadNewContent();                   // Swap the DOM content
+    
+    requestAnimationFrame(() => {
+      area.classList.remove('page-in-down'); // Animate gracefully up into resting place
+    });
     return;
   }
 
+  // ── Navigating Prev/Next ──
   const outClass = dir === 'right' ? 'page-out-left'  : 'page-out-right';
   const inClass  = dir === 'right' ? 'page-in-right'  : 'page-in-left';
 
-  void area.offsetWidth;
+  // 1. Trigger the slide-out animation
   area.classList.add(outClass);
 
+  // 2. Wait for opacity to drop significantly before swapping content
   _transitionTimer = setTimeout(() => {
     loadNewContent();
 
+    // 3. Move it silently to the opposite side to prepare for the slide-in
     area.classList.remove(outClass);
     area.classList.add(inClass);
-    void area.offsetWidth;
+    void area.offsetWidth; // Force reflow so the browser registers the jump
 
+    // 4. Trigger the slide-in to the resting state
     requestAnimationFrame(() => {
       area.classList.remove(inClass);
     });
 
     _transitionTimer = null;
-  }, 480); // slightly shorter than the new 720ms transition
+  }, 450); // 450ms is the sweet spot for the 1.1s exponential curve
 }
 
 /* ════════════════════════════════════════
