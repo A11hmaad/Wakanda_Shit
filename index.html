@@ -1327,7 +1327,10 @@
     }
 
     function applyBookMeta() {
-        document.title = bookMeta.title || 'The Tapestry';
+        // The browser tab title is always "The Tapestry" – never changes.
+        document.title = 'The Tapestry';
+
+        // Update all on‑page book title displays (readers can see their custom title)
         document.getElementById('book-title-display').textContent = bookMeta.title || 'The Book';
         document.getElementById('book-author-display').textContent = bookMeta.author;
         document.getElementById('editor-book-title').textContent = bookMeta.title || 'The Book';
