@@ -38,8 +38,6 @@
     overflow: hidden;
   }
 
-  /* height (not min-height) + min-height:0 locks these to the viewport
-     so inner panes (.reader-scroll, .main-pane) are the real scrollers */
   .view { display: none; flex-direction: column; height: 100%; min-height: 0; }
   .view.active { display: flex; }
 
@@ -211,7 +209,6 @@
     font-family: var(--serif); font-size: 0.95rem;
     flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  /* Sidebar reading-time label */
   .chapter-rt {
     font-family: var(--sans); font-size: 0.65rem; color: var(--muted);
     white-space: nowrap; margin-left: auto; padding-left: 0.4rem;
@@ -320,6 +317,78 @@
     flex: 1; overflow-y: auto; width: 100%;
     min-height: 0;
     overflow-anchor: none;
+    /* Needed for the flip overlay to clip correctly */
+    position: relative;
+  }
+
+  /* ══════════════════════════════════════
+     PAGE FLIP OVERLAY SYSTEM
+     ══════════════════════════════════════
+     #flip-scene   — perspective wrapper, covers the scroll area
+     #flip-panel   — the rotating "page" element
+     #flip-front   — front face (snapshot of old content)
+     #flip-back    — back face (paper texture, slightly darker)
+     #flip-shadow  — shadow gradient cast onto the new page
+  ══════════════════════════════════════ */
+
+  #flip-scene {
+    position: absolute;
+    inset: 0;
+    /* Perspective depth: ~2× the width for natural page-turn feel */
+    perspective: 1800px;
+    perspective-origin: 50% 40%;
+    pointer-events: none;
+    z-index: 20;
+    display: none;   /* only shown during animation */
+  }
+
+  #flip-panel {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    will-change: transform;
+    /* transform-origin set by JS depending on direction */
+  }
+
+  #flip-front {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    backface-visibility: hidden;
+    overflow: hidden;
+  }
+
+  /* Back of the page: cream paper, slightly warm-dark. */
+  #flip-back {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      #d4cfc5 0%,
+      #e0dbd0 20%,
+      #ddd8ce 100%
+    );
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    /* Faint lines to look like paper back */
+    background-image: repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 28px,
+      rgba(26,23,20,0.04) 28px,
+      rgba(26,23,20,0.04) 29px
+    ), linear-gradient(to right, #ccc8be 0%, #ddd8ce 100%);
+  }
+
+  /* Shadow cast onto the incoming page as the flipping page rotates.
+     Lives between #flip-scene and the content. */
+  #flip-shadow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 19;
+    display: none;
+    opacity: 0;
   }
 
   /* ── READER HOMEPAGE ── */
@@ -423,50 +492,6 @@
     padding: 4rem 3rem;
   }
 
-  /* ── PAGE TURN ANIMATIONS (3-D book flip) ──
-     Next: new page flips in from the right, pivoting on its left edge —
-           exactly like turning a right-hand page forward.
-     Prev: new page flips in from the left, pivoting on its right edge —
-           like turning back.
-     The brightness filter simulates the shadow that sweeps across a
-     physical page as it rotates under the light. ── */
-
-  .reader-content-wrap {
-    will-change: transform, filter;
-  }
-
-  @keyframes flipFromRight {
-    0%   { transform: perspective(1400px) rotateY(55deg)  scaleX(0.92);
-           filter: brightness(0.65); opacity: 0.2; }
-    60%  { filter: brightness(0.9);  opacity: 0.85; }
-    100% { transform: perspective(1400px) rotateY(0deg)   scaleX(1);
-           filter: brightness(1);    opacity: 1; }
-  }
-  @keyframes flipFromLeft {
-    0%   { transform: perspective(1400px) rotateY(-55deg) scaleX(0.92);
-           filter: brightness(0.65); opacity: 0.2; }
-    60%  { filter: brightness(0.9);  opacity: 0.85; }
-    100% { transform: perspective(1400px) rotateY(0deg)   scaleX(1);
-           filter: brightness(1);    opacity: 1; }
-  }
-  @keyframes pageFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* easeOutQuart — fast flick, soft landing like a page settling */
-  .page-anim-right {
-    transform-origin: left center;
-    animation: flipFromRight 0.52s cubic-bezier(0.165, 0.84, 0.44, 1);
-  }
-  .page-anim-left {
-    transform-origin: right center;
-    animation: flipFromLeft  0.52s cubic-bezier(0.165, 0.84, 0.44, 1);
-  }
-  .page-anim-fade {
-    animation: pageFadeIn 0.3s ease;
-  }
-
   .reader-chapter-heading {
     font-family: var(--serif); font-size: 2.2rem;
     font-weight: 300; letter-spacing: 0.04em;
@@ -474,7 +499,7 @@
     border-bottom: 1px solid var(--rule);
   }
 
-  /* ── CHAPTER META BAR (word count / mins left) ── */
+  /* ── CHAPTER META BAR ── */
   .reader-chapter-meta-bar {
     display: flex; justify-content: space-between; align-items: center;
     font-family: var(--sans); font-size: 0.71rem;
@@ -492,7 +517,7 @@
   #reader-body i, #reader-body em { font-style: italic; }
   #reader-body u { text-decoration: underline; }
 
-  /* ── CHAPTER NAV (prev/next) ── */
+  /* ── CHAPTER NAV ── */
   .chapter-nav {
     display: flex; gap: 1rem;
     margin-top: 4rem; padding-top: 2rem;
@@ -597,6 +622,10 @@
     cursor: pointer; display: flex;
     align-items: center; justify-content: center;
     line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #flip-scene { display: none !important; }
   }
 
   @media (max-width: 640px) {
@@ -720,7 +749,7 @@
     </label>
   </div>
 
-  <!-- Reading progress bar — sits between controls and the scroll area -->
+  <!-- Reading progress bar -->
   <div id="reading-progress-bar">
     <div id="reading-progress-fill"></div>
   </div>
@@ -733,7 +762,20 @@
       <ul class="chapter-list" id="reader-chapter-list"></ul>
     </nav>
 
+    <!-- reader-scroll is position:relative so the flip overlay clips to it -->
     <div class="reader-scroll" id="reader-scroll">
+
+      <!-- ══ PAGE FLIP OVERLAY ══
+           #flip-shadow: cast onto incoming page (z-index 19)
+           #flip-scene:  the rotating panel (z-index 20)
+      ══════════════════════════ -->
+      <div id="flip-shadow"></div>
+      <div id="flip-scene">
+        <div id="flip-panel">
+          <div id="flip-front"></div>
+          <div id="flip-back"></div>
+        </div>
+      </div>
 
       <!-- ── HOMEPAGE ── -->
       <div id="reader-homepage">
@@ -758,7 +800,6 @@
         <div class="reader-content-wrap">
           <h2 class="reader-chapter-heading" id="reader-chapter-title"></h2>
 
-          <!-- Word count + mins left bar -->
           <div class="reader-chapter-meta-bar">
             <span id="reader-chapter-meta"></span>
             <span id="reader-mins-left"></span>
@@ -899,17 +940,14 @@ let pendingCoverFile = null;
 /* ════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════ */
-
 function wordCount(html) {
   const text = (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   if (!text) return 0;
   return text.split(' ').filter(w => w.length > 0).length;
 }
-
 function readingMins(html) {
   return Math.max(1, Math.ceil(wordCount(html) / 200));
 }
-
 function escHtml(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -930,13 +968,11 @@ async function bootstrap() {
     if (m.password)     storedPassword       = m.password;
   }
   applyBookMeta();
-
   db.ref('chapters').on('value', snap => {
     chapters = snap.val() || {};
     renderChapterLists();
     renderHomepage();
   });
-
   setupScrollListener();
 }
 
@@ -956,7 +992,6 @@ function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
 function exitToLanding() {
   editorMode = false; currentKey = null;
   closeDrawer('editor'); closeDrawer('reader');
@@ -964,15 +999,13 @@ function exitToLanding() {
   document.getElementById('pw-error').textContent = '';
   showView('v-landing');
 }
-
 function enterReader() {
   editorMode = false; currentKey = null;
   showView('v-reader');
-  loadReaderPrefs();   // restore saved font / size
+  loadReaderPrefs();
   showHomepage();
   renderChapterLists();
 }
-
 function showHomepage() {
   document.getElementById('reader-homepage').style.display = '';
   document.getElementById('reader-area').style.display = 'none';
@@ -981,7 +1014,6 @@ function showHomepage() {
   document.querySelectorAll('#reader-chapter-list .chapter-item')
     .forEach(li => li.classList.remove('active'));
 }
-
 function tryLogin() {
   const val = document.getElementById('pw-input').value;
   if (val === storedPassword) {
@@ -995,16 +1027,14 @@ function tryLogin() {
 }
 
 /* ════════════════════════════════════════
-   READER PREFERENCES (localStorage)
+   READER PREFERENCES
 ════════════════════════════════════════ */
 function loadReaderPrefs() {
   const savedFont = localStorage.getItem('tapestry_font');
   const savedSize = localStorage.getItem('tapestry_size');
   const fontSel   = document.getElementById('reader-font-select');
   const sizeRange = document.getElementById('reader-size-range');
-
   if (savedFont) {
-    // Match the saved value against available options
     const opts = Array.from(fontSel.options).map(o => o.value);
     if (opts.includes(savedFont)) fontSel.value = savedFont;
   }
@@ -1022,18 +1052,11 @@ let _scrollSaveTimer = null;
 
 function setupScrollListener() {
   const scrollEl = document.getElementById('reader-scroll');
-
   scrollEl.addEventListener('scroll', function () {
-    // Live update on rAF (smooth, no jank)
     if (!_scrollTicking) {
-      requestAnimationFrame(() => {
-        liveUpdateProgress();
-        _scrollTicking = false;
-      });
+      requestAnimationFrame(() => { liveUpdateProgress(); _scrollTicking = false; });
       _scrollTicking = true;
     }
-
-    // Debounced save to localStorage
     if (currentKey) {
       clearTimeout(_scrollSaveTimer);
       _scrollSaveTimer = setTimeout(() => {
@@ -1042,7 +1065,6 @@ function setupScrollListener() {
         const pct = scrollHeight > 0 ? Math.round(scrollTop / scrollHeight * 100) : 0;
         localStorage.setItem('tapestry_scroll_'   + currentKey, scrollTop);
         localStorage.setItem('tapestry_progress_' + currentKey, pct);
-        // Refresh homepage list progress indicators if homepage is visible
         if (document.getElementById('reader-homepage').style.display !== 'none') {
           renderHomepage();
         }
@@ -1057,7 +1079,6 @@ function liveUpdateProgress() {
   const scrollTop   = scrollEl.scrollTop;
   const scrollHeight = scrollEl.scrollHeight - scrollEl.clientHeight;
   const pct = scrollHeight > 0 ? Math.round(scrollTop / scrollHeight * 100) : 0;
-
   document.getElementById('reading-progress-fill').style.width = pct + '%';
   updateMinsLeft(pct);
 }
@@ -1073,12 +1094,168 @@ function updateMinsLeft(pct) {
 }
 
 /* ════════════════════════════════════════
-   SORTED CHAPTERS HELPER
+   SORTED CHAPTERS
 ════════════════════════════════════════ */
 function sortedChapters() {
   return Object.entries(chapters)
     .map(([key, val]) => ({ key, ...val }))
     .sort((a, b) => (a.serial || 0) - (b.serial || 0));
+}
+
+/* ════════════════════════════════════════
+   PAGE FLIP ANIMATION ENGINE
+   ════════════════════════════════════════
+   How it works:
+   1. We snapshot the current visible scroll area using html2canvas — but that's
+      heavy. Instead we clone the reader-scroll's inner HTML into #flip-front,
+      apply the same scroll offset, and clip it. This is pure DOM + CSS, no canvas.
+   2. The flip panel rotates on its spine (left edge for "next", right for "prev").
+   3. A gradient shadow div (#flip-shadow) sweeps over the incoming page.
+   4. The new content is loaded before the animation starts, so it's revealed as
+      the old page rotates away.
+   5. Custom JS easing (easeInOutQuint) gives a natural flick-and-settle feel.
+════════════════════════════════════════ */
+
+let _flipInProgress = false;
+
+/**
+ * runPageFlip(dir, loadNewContent)
+ * dir: 'right' (next chapter) | 'left' (prev chapter) | 'fade' (jump from list)
+ * loadNewContent: function that populates the DOM with the new chapter
+ */
+function runPageFlip(dir, loadNewContent) {
+  // For 'fade' or if no chapter is currently shown, just load directly
+  if (dir === 'fade' || !currentKey) {
+    loadNewContent();
+    return;
+  }
+
+  // Prevent stacking flips
+  if (_flipInProgress) {
+    loadNewContent();
+    return;
+  }
+  _flipInProgress = true;
+
+  const scrollEl   = document.getElementById('reader-scroll');
+  const scene      = document.getElementById('flip-scene');
+  const panel      = document.getElementById('flip-panel');
+  const front      = document.getElementById('flip-front');
+  const shadowEl   = document.getElementById('flip-shadow');
+
+  const W = scrollEl.clientWidth;
+  const H = scrollEl.clientHeight;
+
+  /* ── 1. Capture the old page into #flip-front ── */
+  // Clone the visible portion of reader-area into the front face
+  const readerArea = document.getElementById('reader-area');
+  const clone = readerArea.cloneNode(true);
+
+  // Position clone to show exactly what's currently visible
+  const scrollTop = scrollEl.scrollTop;
+  clone.style.cssText = `
+    position: absolute;
+    top: ${-scrollTop}px;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    pointer-events: none;
+  `;
+  // Apply current reader font/size to clone
+  const readerBody = document.getElementById('reader-body');
+  clone.querySelector('#reader-body').style.fontFamily = readerBody.style.fontFamily || '';
+  clone.querySelector('#reader-body').style.fontSize   = readerBody.style.fontSize   || '';
+
+  front.innerHTML = '';
+  front.appendChild(clone);
+
+  /* ── 2. Size the flip scene to cover the scroll area ── */
+  scene.style.display = 'block';
+  scene.style.width   = W + 'px';
+  scene.style.height  = H + 'px';
+
+  /* ── 3. Set pivot direction ── */
+  if (dir === 'right') {
+    // Next chapter: page flips from right-to-left (spine on left)
+    panel.style.transformOrigin = 'left center';
+    shadowEl.style.background = `linear-gradient(
+      to right,
+      rgba(26,23,20,0.28) 0%,
+      rgba(26,23,20,0.06) 35%,
+      rgba(26,23,20,0)    60%
+    )`;
+  } else {
+    // Prev chapter: page flips from left-to-right (spine on right)
+    panel.style.transformOrigin = 'right center';
+    shadowEl.style.background = `linear-gradient(
+      to left,
+      rgba(26,23,20,0.28) 0%,
+      rgba(26,23,20,0.06) 35%,
+      rgba(26,23,20,0)    60%
+    )`;
+  }
+
+  /* ── 4. Load new content underneath (hidden by flip-front) ── */
+  loadNewContent();
+
+  /* Scroll new content to top now, before animation ends */
+  scrollEl.scrollTop = 0;
+
+  /* ── 5. Show shadow overlay ── */
+  shadowEl.style.display = 'block';
+  shadowEl.style.opacity = '0';
+
+  /* ── 6. Animate ── */
+  const DURATION  = 520; // ms
+  const startTime = performance.now();
+  const targetAngle = dir === 'right' ? -180 : 180;
+
+  function easeInOutQuint(t) {
+    return t < 0.5 ? 16*t*t*t*t*t : 1 - Math.pow(-2*t + 2, 5) / 2;
+  }
+
+  function tick(now) {
+    const elapsed = now - startTime;
+    const t       = Math.min(elapsed / DURATION, 1);
+    const ease    = easeInOutQuint(t);
+    const angle   = ease * targetAngle;
+
+    // Page warp: bend peaks at the 90° midpoint
+    // We simulate the curve by squeezing scaleX as the page nears 90°,
+    // which makes the leading edge appear to curl inward.
+    const midProgress = Math.sin(ease * Math.PI);       // 0→1→0 bell
+    const scaleX      = 1 - midProgress * 0.08;         // gentle squeeze
+    const skewY       = midProgress * (dir === 'right' ? -2.5 : 2.5); // very subtle curl
+
+    panel.style.transform =
+      `rotateY(${angle}deg) scaleX(${scaleX}) skewY(${skewY}deg)`;
+
+    // Shadow on incoming page: strongest at mid-flip (page at 90°, maximum coverage)
+    shadowEl.style.opacity = (midProgress * 0.55).toString();
+
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      // ── Cleanup ──
+      panel.style.transform = '';
+      front.innerHTML = '';
+      scene.style.display = 'none';
+      shadowEl.style.display = 'none';
+      shadowEl.style.opacity = '0';
+      _flipInProgress = false;
+
+      // Small fade-in on the revealed content to soften the landing
+      const wrap = document.querySelector('.reader-content-wrap');
+      wrap.style.transition = 'opacity 0.18s ease';
+      wrap.style.opacity = '0.6';
+      requestAnimationFrame(() => {
+        wrap.style.opacity = '1';
+        setTimeout(() => { wrap.style.transition = ''; }, 200);
+      });
+    }
+  }
+
+  requestAnimationFrame(tick);
 }
 
 /* ════════════════════════════════════════
@@ -1088,7 +1265,6 @@ function renderHomepage() {
   document.getElementById('rh-title-display').textContent  = bookMeta.title  || 'The Book';
   document.getElementById('rh-author-display').textContent = bookMeta.author || '';
 
-  // Cover
   const coverWrap = document.getElementById('rh-cover-wrap');
   if (bookMeta.coverBase64) {
     coverWrap.innerHTML = `<img class="rh-cover" src="${bookMeta.coverBase64}" alt="Cover" />`;
@@ -1096,7 +1272,6 @@ function renderHomepage() {
     coverWrap.innerHTML = '';
   }
 
-  // Intro
   const introEl = document.getElementById('rh-intro-display');
   if (bookMeta.intro && bookMeta.intro.trim()) {
     introEl.style.display = '';
@@ -1117,20 +1292,17 @@ function renderHomepage() {
   }
 
   const lastKey = localStorage.getItem('tapestry_last_chapter');
-
   rl.innerHTML = '';
   sorted.forEach(ch => {
     const progress = parseInt(localStorage.getItem('tapestry_progress_' + ch.key)) || 0;
     const rt       = readingMins(ch.content);
     const isLast   = ch.key === lastKey;
 
-    // Meta line: reading time + progress if any
     let metaText = rt + ' min read';
     if (progress > 0) metaText += ' · ' + progress + '% read';
 
     const badgeHtml = isLast
-      ? `<span class="rhi-here-badge">↩ You were here</span>`
-      : '';
+      ? `<span class="rhi-here-badge">↩ You were here</span>` : '';
 
     const progressHtml = progress > 0
       ? `<div class="rhi-progress"><div class="rhi-progress-fill" style="width:${progress}%"></div></div>`
@@ -1148,7 +1320,6 @@ function renderHomepage() {
         <span class="rhi-meta">${metaText}</span>
         ${progressHtml}
       </div>`;
-
     li.addEventListener('click', () => selectChapter(ch.key, false, 'fade'));
     rl.appendChild(li);
   });
@@ -1161,7 +1332,6 @@ function renderChapterLists() {
   const sorted  = sortedChapters();
   const lastKey = localStorage.getItem('tapestry_last_chapter');
 
-  // Editor sidebar
   const el = document.getElementById('editor-chapter-list');
   el.innerHTML = '';
   sorted.forEach(ch => {
@@ -1184,7 +1354,6 @@ function renderChapterLists() {
     el.appendChild(li);
   });
 
-  // Reader sidebar
   const rl = document.getElementById('reader-chapter-list');
   rl.innerHTML = '';
   sorted.forEach(ch => {
@@ -1208,14 +1377,14 @@ function renderChapterLists() {
 
 /* ════════════════════════════════════════
    SELECT A CHAPTER
-   animDir: 'right' | 'left' | 'fade' | undefined
+   animDir: 'right' | 'left' | 'fade'
 ════════════════════════════════════════ */
 function selectChapter(key, isEditor, animDir) {
-  currentKey = key;
   const ch = chapters[key];
   if (!ch) return;
 
   if (isEditor) {
+    currentKey = key;
     document.getElementById('editor-empty').style.display = 'none';
     const area = document.getElementById('editor-area');
     area.style.display = 'flex';
@@ -1223,60 +1392,60 @@ function selectChapter(key, isEditor, animDir) {
     document.getElementById('editor-content').innerHTML    = ch.content || '';
     document.getElementById('save-status').textContent     = 'Saved';
     updateEditorWordCount();
+    renderChapterLists();
 
   } else {
-    // Save as last-read chapter
+    // Reader path — use page flip
+    const prevKey = currentKey;
+    currentKey    = key;
+
     localStorage.setItem('tapestry_last_chapter', key);
 
-    // ── Page-turn animation ──
-    const wrap = document.querySelector('.reader-content-wrap');
-    wrap.classList.remove('page-anim-right', 'page-anim-left', 'page-anim-fade');
-    void wrap.offsetWidth;                          // force reflow before re-adding
-    if      (animDir === 'right') wrap.classList.add('page-anim-right');
-    else if (animDir === 'left')  wrap.classList.add('page-anim-left');
-    else                          wrap.classList.add('page-anim-fade');
-
-    // Show chapter area + progress bar
+    // Show reader area (needed before we clone it for the flip)
     document.getElementById('reader-homepage').style.display       = 'none';
     document.getElementById('reader-area').style.display           = 'block';
     document.getElementById('reading-progress-bar').style.display  = 'block';
 
-    // Fill content
-    document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
-    document.getElementById('reader-body').innerHTML =
-      ch.content || '<em style="color:var(--muted)">This chapter has no content yet.</em>';
+    // Retrieve saved scroll/progress for the new chapter
+    const savedScroll   = parseInt(localStorage.getItem('tapestry_scroll_'   + key)) || 0;
+    const savedProgress = parseInt(localStorage.getItem('tapestry_progress_' + key)) || 0;
 
-    // Chapter meta bar
-    const wc = wordCount(ch.content);
-    const rt = readingMins(ch.content);
-    document.getElementById('reader-chapter-meta').textContent =
-      wc.toLocaleString() + ' words · ' + rt + ' min read';
+    // The closure that loads new content into the DOM
+    function loadContent() {
+      document.getElementById('reader-chapter-title').textContent = ch.title || 'Untitled';
+      document.getElementById('reader-body').innerHTML =
+        ch.content || '<em style="color:var(--muted)">This chapter has no content yet.</em>';
 
-    applyReaderFont();
-    applyReaderSize();
-    updateChapterNav();
+      const wc = wordCount(ch.content);
+      const rt = readingMins(ch.content);
+      document.getElementById('reader-chapter-meta').textContent =
+        wc.toLocaleString() + ' words · ' + rt + ' min read';
 
-    // Blur focused element so browser doesn't re-scroll to it
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
+      applyReaderFont();
+      applyReaderSize();
+      updateChapterNav();
+
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
+      // Restore scroll position
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const scrollEl = document.getElementById('reader-scroll');
+          scrollEl.scrollTop = savedScroll;
+          document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
+          updateMinsLeft(savedProgress);
+        });
+      });
     }
 
-    // Restore saved scroll position (or go to top for new chapters)
-    const savedScroll    = parseInt(localStorage.getItem('tapestry_scroll_'   + key)) || 0;
-    const savedProgress  = parseInt(localStorage.getItem('tapestry_progress_' + key)) || 0;
+    // Run the flip (or fade if coming from homepage)
+    const effectiveDir = prevKey ? animDir : 'fade';
+    runPageFlip(effectiveDir, loadContent);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const scrollEl = document.getElementById('reader-scroll');
-        scrollEl.scrollTop = savedScroll;
-        window.scrollTo(0, 0);
-        document.getElementById('reading-progress-fill').style.width = savedProgress + '%';
-        updateMinsLeft(savedProgress);
-      });
-    });
+    renderChapterLists();
   }
-
-  renderChapterLists();
 }
 
 /* ════════════════════════════════════════
@@ -1394,7 +1563,6 @@ async function saveChapterMeta() {
   if (key === currentKey) document.getElementById('editor-title-input').value = title;
   closeModal('modal-edit-chapter');
 }
-
 async function deleteChapter(key) {
   if (!confirm('Delete this chapter? This cannot be undone.')) return;
   await db.ref('chapters/' + key).remove();
@@ -1443,12 +1611,10 @@ function openBookSettings() {
   } else {
     curWrap.style.display = 'none';
   }
-
   document.getElementById('cover-new-preview-wrap').style.display = 'none';
   document.getElementById('bs-cover-input').value = '';
   openModal('modal-book-settings');
 }
-
 function previewCover(evt) {
   const file = evt.target.files[0];
   if (!file) return;
@@ -1457,7 +1623,6 @@ function previewCover(evt) {
   document.getElementById('cover-new-preview').src = url;
   document.getElementById('cover-new-preview-wrap').style.display = '';
 }
-
 async function removeCover() {
   if (!confirm('Remove the current cover image?')) return;
   bookMeta.coverBase64 = '';
@@ -1466,11 +1631,9 @@ async function removeCover() {
   document.getElementById('cover-current-img').src = '';
   applyBookMeta();
 }
-
 async function saveBookSettings() {
   const err = document.getElementById('bs-error');
   err.textContent = 'Saving…';
-
   bookMeta.title  = document.getElementById('bs-title').value.trim()  || 'The Tapestry';
   bookMeta.author = document.getElementById('bs-author').value.trim();
   bookMeta.intro  = document.getElementById('bs-intro').value.trim();
@@ -1484,7 +1647,6 @@ async function saveBookSettings() {
       return;
     }
   }
-
   try {
     await db.ref('meta').update({
       title:       bookMeta.title,
@@ -1496,12 +1658,10 @@ async function saveBookSettings() {
     err.textContent = 'Save failed: ' + e.message;
     return;
   }
-
   applyBookMeta();
   err.textContent = '';
   closeModal('modal-book-settings');
 }
-
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1512,12 +1672,11 @@ function fileToBase64(file) {
 }
 
 /* ════════════════════════════════════════
-   READER FONT / SIZE  (with localStorage persistence)
+   READER FONT / SIZE
 ════════════════════════════════════════ */
 function applyReaderFont() {
   const f = document.getElementById('reader-font-select').value;
   localStorage.setItem('tapestry_font', f);
-
   const body  = document.getElementById('reader-body');
   const title = document.getElementById('reader-chapter-title');
   const intro = document.getElementById('rh-intro-display');
@@ -1527,11 +1686,9 @@ function applyReaderFont() {
   body.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
   intro.querySelectorAll('*').forEach(el => el.style.fontFamily = f);
 }
-
 function applyReaderSize() {
   const s = parseInt(document.getElementById('reader-size-range').value);
   localStorage.setItem('tapestry_size', s);
-
   const body  = document.getElementById('reader-body');
   const intro = document.getElementById('rh-intro-display');
   body.style.fontSize  = s + 'px';
