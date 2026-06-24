@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Tapestry – Editor</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div id="v-editor" class="view active">
+        <div class="app-header">
+            <div style="display:flex;align-items:center;gap:0.8rem;">
+                <button class="hamburger-btn" id="editor-hamburger" onclick="toggleDrawer('editor')" title="Chapters">
+                    <span></span><span></span><span></span>
+                </button>
+                <h1 id="editor-book-title">The Book</h1>
+            </div>
+            <div class="header-actions">
+                <a href="notes.html" class="btn-sm notes-nav-btn">Notes</a>
+                <button class="btn-sm" onclick="openChangePassword()">Change password</button>
+                <button class="btn-sm" onclick="openBookSettings()">Book settings</button>
+                <button class="btn-sm danger" onclick="window.location.href='index.html'">Exit</button>
+            </div>
+        </div>
+
+        <div class="drawer-backdrop" id="editor-backdrop" onclick="closeDrawer('editor')"></div>
+
+        <div class="app-body">
+            <nav class="sidebar" id="editor-sidebar">
+                <div class="sidebar-header">Chapters<button class="sidebar-add-btn" onclick="openAddChapter()">＋</button></div>
+                <ul class="chapter-list" id="editor-chapter-list"></ul>
+            </nav>
+
+            <div class="main-pane" id="editor-main">
+                <div class="empty-state" id="editor-empty"><p>Select a chapter to begin, or add one.</p></div>
+                <div id="editor-area" style="display:none;flex-direction:column;flex:1;">
+                    <input type="text" class="editor-chapter-title" id="editor-title-input" placeholder="Chapter title" />
+                    <div class="editor-toolbar">
+                        <button class="toolbar-btn" id="tb-bold" onmousedown="e(event,'bold')"><b>B</b></button>
+                        <button class="toolbar-btn" id="tb-italic" onmousedown="e(event,'italic')"><i>I</i></button>
+                        <button class="toolbar-btn" id="tb-underline" onmousedown="e(event,'underline')"><u>U</u></button>
+                    </div>
+                    <div id="editor-content" contenteditable="true" onkeydown="handleEditorKey(event)" oninput="handleEditorInput()" onmouseup="updateToolbar()" onkeyup="updateToolbar()"></div>
+                    <div class="editor-save-bar">
+                        <div class="save-status" id="save-status">Unsaved changes</div>
+                        <div id="editor-wordcount">0 words</div>
+                        <button class="btn-accent" onclick="saveCurrentChapter()">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    <!-- Add Chapter -->
+    <div class="modal-overlay" id="modal-add-chapter">
+        <div class="modal">
+            <h2>New chapter</h2>
+            <label>Title <input type="text" id="new-chapter-title" placeholder="Chapter title" /></label>
+            <label>Serial (order) <input type="number" id="new-chapter-serial" min="1" value="1" /></label>
+            <div class="error-msg" id="add-chapter-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-add-chapter')">Cancel</button>
+                <button class="btn-accent" onclick="addChapter()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Chapter -->
+    <div class="modal-overlay" id="modal-edit-chapter">
+        <div class="modal">
+            <h2>Edit chapter</h2>
+            <input type="hidden" id="edit-chapter-key" />
+            <label>Title <input type="text" id="edit-chapter-title" /></label>
+            <label>Serial (order) <input type="number" id="edit-chapter-serial" min="1" /></label>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-edit-chapter')">Cancel</button>
+                <button class="btn-accent" onclick="saveChapterMeta()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="modal-overlay" id="modal-change-pw">
+        <div class="modal">
+            <h2>Change password</h2>
+            <label>Current password <input type="password" id="old-pw" /></label>
+            <label>New password <input type="password" id="new-pw" /></label>
+            <label>Confirm new password <input type="password" id="new-pw2" /></label>
+            <div class="error-msg" id="pw-change-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-change-pw')">Cancel</button>
+                <button class="btn-accent" onclick="changePassword()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Settings -->
+    <div class="modal-overlay" id="modal-book-settings">
+        <div class="modal">
+            <h2>Book settings</h2>
+            <label>Title <input type="text" id="bs-title" placeholder="My Novel" /></label>
+            <label>Author / subtitle <input type="text" id="bs-author" placeholder="by Author Name" /></label>
+            <label style="flex-direction:column;gap:0.6rem;">
+                Introduction (shown on homepage)
+                <textarea id="bs-intro" rows="5" style="padding:0.65rem 0.9rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.95rem;color:var(--ink);outline:none;resize:vertical;line-height:1.6;" placeholder="A few words about this story…"></textarea>
+            </label>
+            <label style="gap:0.8rem;">
+                Cover image
+                <div id="cover-current-wrap" style="display:none;">
+                    <div class="cover-preview-wrap">
+                        <img id="cover-current-img" class="cover-preview-img" src="" alt="Current cover" />
+                        <button class="cover-remove-btn" onclick="removeCover()" title="Remove cover">✕</button>
+                    </div>
+                </div>
+                <input type="file" id="bs-cover-input" accept="image/*" onchange="previewCover(event)" style="font-size:0.82rem;color:var(--muted);" />
+                <div id="cover-new-preview-wrap" style="display:none;">
+                    <img id="cover-new-preview" class="cover-preview-img" src="" alt="New cover preview" />
+                    <p style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem;font-family:var(--sans);">New cover (not saved yet)</p>
+                </div>
+            </label>
+            <div class="error-msg" id="bs-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-book-settings')">Cancel</button>
+                <button class="btn-accent" onclick="saveBookSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SCRIPTS ================= -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/chapters.js"></script>
+    <script src="js/editor.js"></script>
+    <script>
+        // ================= INITIALIZATION =================
+        (async function() {
+            // Load password
+            await loadPassword();
+
+            // Load book meta from Firebase
+            const metaSnap = await db.ref('meta').get();
+            if (metaSnap.exists()) {
+                const m = metaSnap.val();
+                if (m.title) bookMeta.title = m.title;
+                if (m.author) bookMeta.author = m.author;
+                if (m.intro) bookMeta.intro = m.intro;
+                if (m.coverBase64) bookMeta.coverBase64 = m.coverBase64;
+                if (m.password) storedPassword = m.password;
+            }
+            // Update header title
+            document.getElementById('editor-book-title').textContent = bookMeta.title || 'The Book';
+
+            // Start listening to chapters
+            loadChaptersFromDB();
+
+            // Drawer & modal helpers
+            window.toggleDrawer = function(which) {
+                const sidebar = document.getElementById(which + '-sidebar');
+                sidebar.classList.contains('open') ? closeDrawer(which) : openDrawer(which);
+            };
+            window.openDrawer = function(which) {
+                document.getElementById(which + '-sidebar').classList.add('open');
+                document.getElementById(which + '-backdrop').classList.add('open');
+                document.getElementById(which + '-hamburger').classList.add('open');
+            };
+            window.closeDrawer = function(which) {
+                document.getElementById(which + '-sidebar').classList.remove('open');
+                document.getElementById(which + '-backdrop').classList.remove('open');
+                document.getElementById(which + '-hamburger').classList.remove('open');
+            };
+
+            window.openModal = function(id) { document.getElementById(id).classList.add('open'); };
+            window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+            document.querySelectorAll('.modal-overlay').forEach(el => {
+                el.addEventListener('click', evt => { if (evt.target === el) closeModal(el.id); });
+            });
+
+            // Global Ctrl+S (save current chapter)
+            document.addEventListener('keydown', function(evt) {
+                if ((evt.ctrlKey || evt.metaKey) && evt.key === 's') {
+                    evt.preventDefault();
+                    if (currentKey && document.getElementById('editor-area').style.display !== 'none') {
+                        saveCurrentChapter();
+                    }
+                }
+            });
+
+            // Password change logic
+            window.openChangePassword = function() {
+                document.getElementById('old-pw').value = '';
+                document.getElementById('new-pw').value = '';
+                document.getElementById('new-pw2').value = '';
+                document.getElementById('pw-change-error').textContent = '';
+                openModal('modal-change-pw');
+            };
+            window.changePassword = async function() {
+                const old = document.getElementById('old-pw').value;
+                const n1 = document.getElementById('new-pw').value;
+                const n2 = document.getElementById('new-pw2').value;
+                const err = document.getElementById('pw-change-error');
+                if (old !== storedPassword) { err.textContent = 'Current password incorrect.'; return; }
+                if (!n1) { err.textContent = 'New password cannot be empty.'; return; }
+                if (n1 !== n2) { err.textContent = 'Passwords do not match.'; return; }
+                storedPassword = n1;
+                await db.ref('meta/password').set(n1);
+                closeModal('modal-change-pw');
+            };
+
+            // Book settings (functions from editor.js)
+            window.openBookSettings = openBookSettings;   // defined in editor.js
+            window.saveBookSettings = saveBookSettings;
+            window.previewCover = previewCover;
+            window.removeCover = removeCover;
+        })();
+    </script>
+</body>
+</html>
