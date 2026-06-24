@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Tapestry</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div id="v-reader" class="view active">
+        <div class="app-header">
+            <div style="display:flex;align-items:center;gap:0.8rem;">
+                <button class="hamburger-btn" id="reader-hamburger" onclick="toggleDrawer('reader')" title="Chapters">
+                    <span></span><span></span><span></span>
+                </button>
+                <h1 id="reader-book-title">The Book</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-sm" onclick="goReaderHome()">Home</button>
+                <button class="btn-sm" onclick="window.location.href='index.html'">Exit</button>
+            </div>
+        </div>
+        <div class="reader-controls">
+            <label>Font <select id="reader-font-select" onchange="applyReaderFont()"><option value="'Cormorant Garamond', Georgia, serif">Cormorant</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', serif">Times New Roman</option><option value="'Palatino Linotype', Palatino, serif">Palatino</option><option value="'Inter', system-ui, sans-serif">Inter</option><option value="'Courier New', monospace">Courier</option></select></label>
+            <label>Size <input type="range" id="reader-size-range" min="12" max="28" value="19" oninput="applyReaderSize()" /><span id="reader-size-label" style="font-family:var(--sans);font-size:0.8rem;color:var(--muted)">19px</span></label>
+        </div>
+        <div id="reading-progress-bar"><div id="reading-progress-fill"></div></div>
+        <div class="drawer-backdrop" id="reader-backdrop" onclick="closeDrawer('reader')"></div>
+        <div class="app-body">
+            <nav class="sidebar" id="reader-sidebar">
+                <div class="sidebar-header">Chapters</div>
+                <ul class="chapter-list" id="reader-chapter-list"></ul>
+            </nav>
+            <div class="reader-scroll" id="reader-scroll">
+                <div id="reader-homepage">
+                    <div id="rh-cover-wrap"></div>
+                    <div>
+                        <div class="rh-title" id="rh-title-display">The Book</div>
+                        <div class="rh-author" id="rh-author-display"></div>
+                    </div>
+                    <div class="rh-divider"></div>
+                    <div class="rh-intro" id="rh-intro-display" style="display:none;"></div>
+                    <div class="rh-divider"></div>
+                    <div style="width:100%;max-width:480px;">
+                        <div class="rh-read-heading" id="rh-read-heading">Read</div>
+                        <ul class="rh-chapter-list" id="rh-chapter-list">
+                            <li style="font-family:var(--serif);font-style:italic;color:var(--muted);padding:1rem 0;">No chapters yet.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="reader-area" style="display:none;">
+                    <div class="reader-content-wrap">
+                        <h2 class="reader-chapter-heading" id="reader-chapter-title"></h2>
+                        <div class="reader-chapter-meta-bar">
+                            <span id="reader-chapter-meta"></span><span id="reader-mins-left"></span>
+                        </div>
+                        <div id="reader-body"></div>
+                        <div class="chapter-nav" id="chapter-nav">
+                            <button class="chapter-nav-btn prev disabled" id="nav-prev" onclick="navChapter(-1)"><span class="nav-label">← Previous</span><span class="nav-title" id="nav-prev-title"></span></button>
+                            <button class="chapter-nav-btn next disabled" id="nav-next" onclick="navChapter(1)"><span class="nav-label">Next →</span><span class="nav-title" id="nav-next-title"></span></button>
+                        </div>
+                        <div class="end-of-book" id="end-of-book">
+                            <div class="end-ornament">∗ &nbsp; ∗ &nbsp; ∗</div>
+                            <div class="end-text">This is the end of the tapestry, for now…<br><span style="font-size:0.9rem;opacity:0.7;">More threads are yet to be woven.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/chapters.js"></script>
+    <script src="js/reader.js"></script>
+    <script>
+        // Reader page initialization
+        (async function() {
+            // Load book meta
+            const snap = await db.ref('meta').get();
+            if (snap.exists()) {
+                const m = snap.val();
+                bookMeta = Object.assign(bookMeta, m);
+            }
+            document.getElementById('reader-book-title').textContent = bookMeta.title || 'The Book';
+
+            // Load chapters listener
+            loadChaptersFromDB();
+
+            // Setup reader UI
+            loadReaderPrefs();
+            applyReaderFont();
+            applyReaderSize();
+            setupScrollListener();
+
+            // Show homepage initially
+            document.getElementById('reader-homepage').style.display = '';
+            document.getElementById('reader-area').style.display = 'none';
+            document.getElementById('reading-progress-bar').style.display = 'none';
+
+            // Drawer toggles
+            window.toggleDrawer = function(which) {
+                const sidebar = document.getElementById(which + '-sidebar');
+                sidebar.classList.contains('open') ? closeDrawer(which) : openDrawer(which);
+            };
+            window.openDrawer = function(which) {
+                document.getElementById(which + '-sidebar').classList.add('open');
+                document.getElementById(which + '-backdrop').classList.add('open');
+                document.getElementById(which + '-hamburger').classList.add('open');
+            };
+            window.closeDrawer = function(which) {
+                document.getElementById(which + '-sidebar').classList.remove('open');
+                document.getElementById(which + '-backdrop').classList.remove('open');
+                document.getElementById(which + '-hamburger').classList.remove('open');
+            };
+
+            window.goReaderHome = function() {
+                flushScrollSave();
+                closeDrawer('reader');
+                renderHomepage();
+                document.getElementById('reader-homepage').style.display = '';
+                document.getElementById('reader-area').style.display = 'none';
+                document.getElementById('reading-progress-bar').style.display = 'none';
+                currentKey = null;
+            };
+        })();
+    </script>
+</body>
+</html>
