@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>The Tapestry</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -71,7 +71,6 @@
             gap: 3rem;
             overflow-y: auto;
         }
-
         .landing-title {
             font-family: var(--serif);
             font-size: clamp(2.8rem, 8vw, 6rem);
@@ -100,7 +99,6 @@
             width: 100%;
             max-width: 340px;
         }
-
         .btn-primary {
             width: 100%;
             padding: 0.85rem 1.5rem;
@@ -118,7 +116,6 @@
         .btn-primary:hover {
             background: #4a3025;
         }
-
         .pw-row {
             display: flex;
             width: 100%;
@@ -153,7 +150,6 @@
         .pw-row button:hover {
             background: #4a3025;
         }
-
         .error-msg {
             font-size: 0.78rem;
             color: var(--danger);
@@ -186,7 +182,6 @@
             align-items: center;
             flex-wrap: wrap;
         }
-
         .btn-sm {
             padding: 0.45rem 0.9rem;
             font-family: var(--sans);
@@ -272,7 +267,6 @@
         .drawer-backdrop.open {
             display: block;
         }
-
         .sidebar {
             position: fixed;
             top: 0;
@@ -291,7 +285,6 @@
         .sidebar.open {
             transform: translateX(0);
         }
-
         .sidebar-header {
             padding: 1.2rem 1.4rem 0.8rem;
             font-family: var(--sans);
@@ -314,7 +307,6 @@
             line-height: 1;
             padding: 0 0.2rem;
         }
-
         .chapter-list {
             list-style: none;
             padding: 0.5rem 0;
@@ -368,7 +360,6 @@
         .chapter-item.active .chapter-actions {
             opacity: 1;
         }
-
         .icon-btn {
             background: none;
             border: none;
@@ -537,7 +528,6 @@
             outline: none;
             cursor: pointer;
         }
-
         .reader-scroll {
             flex: 1;
             overflow-y: auto;
@@ -546,7 +536,6 @@
             overflow-anchor: none;
             scroll-behavior: auto;
         }
-
         #reader-homepage {
             max-width: 720px;
             margin: 0 auto;
@@ -557,7 +546,6 @@
             gap: 3rem;
             text-align: center;
         }
-
         .rh-cover {
             width: 100%;
             max-width: 560px;
@@ -568,7 +556,6 @@
             box-shadow: 4px 8px 24px rgba(26, 23, 20, 0.15);
             display: block;
         }
-
         .rh-title {
             font-family: var(--serif);
             font-size: clamp(2.2rem, 5vw, 4rem);
@@ -583,13 +570,11 @@
             color: var(--muted);
             margin-top: 0.4rem;
         }
-
         .rh-divider {
             width: 50px;
             height: 1px;
             background: var(--rule);
         }
-
         .rh-intro {
             font-family: var(--serif);
             font-size: 1.05rem;
@@ -598,7 +583,6 @@
             text-align: left;
             max-width: 560px;
         }
-
         .rh-read-heading {
             font-family: var(--sans);
             font-size: 0.7rem;
@@ -607,7 +591,6 @@
             color: var(--muted);
             margin-bottom: 1rem;
         }
-
         .rh-chapter-list {
             list-style: none;
             width: 100%;
@@ -629,7 +612,6 @@
         .rh-chapter-item:hover .rh-ci-title {
             color: var(--accent);
         }
-
         .rh-ci-num {
             font-family: var(--serif);
             font-size: 0.8rem;
@@ -695,7 +677,6 @@
             padding: 4rem 3rem;
             will-change: transform;
         }
-
         @keyframes pageFromRight {
             from {
                 transform: translateX(70px);
@@ -733,7 +714,6 @@
         .page-anim-fade {
             animation: pageFadeIn 0.55s ease;
         }
-
         .reader-chapter-heading {
             font-family: var(--serif);
             font-size: 2.2rem;
@@ -743,7 +723,6 @@
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--rule);
         }
-
         .reader-chapter-meta-bar {
             display: flex;
             justify-content: space-between;
@@ -758,7 +737,6 @@
             flex-wrap: wrap;
             gap: 0.4rem;
         }
-
         #reader-body {
             font-family: var(--serif);
             font-size: 19px;
@@ -776,7 +754,6 @@
         #reader-body u {
             text-decoration: underline;
         }
-
         .chapter-nav {
             display: flex;
             gap: 1rem;
@@ -823,7 +800,6 @@
         .chapter-nav-btn:hover .nav-title {
             color: var(--accent);
         }
-
         .end-of-book {
             display: none;
             margin-top: 4rem;
@@ -910,7 +886,6 @@
             justify-content: flex-end;
             margin-top: 0.5rem;
         }
-
         .btn-accent {
             padding: 0.6rem 1.3rem;
             background: var(--accent);
@@ -939,7 +914,6 @@
         .btn-cancel:hover {
             border-color: var(--muted);
         }
-
         .cover-preview-wrap {
             position: relative;
             display: inline-block;
@@ -1067,6 +1041,7 @@
             padding: 2rem 2.5rem;
             overflow-y: auto;
             min-height: 0;
+            min-width: 0;
         }
         .notes-editor-title {
             font-family: var(--serif);
@@ -1102,6 +1077,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
         .notes-browser-header {
             display: flex;
@@ -1110,6 +1086,8 @@
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--rule);
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         .notes-browser-header h3 {
             font-family: var(--serif);
@@ -1147,6 +1125,25 @@
             gap: 0.2rem;
         }
 
+        /* ── Back button ── */
+        .btn-back {
+            background: none;
+            border: 1px solid var(--rule);
+            padding: 0.4rem 0.8rem;
+            font-family: var(--sans);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: var(--muted);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-back:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
         /* ── TIMELINE ── */
         .timeline-era-setup {
             display: flex;
@@ -1176,6 +1173,7 @@
             color: var(--ink);
             outline: none;
             width: 140px;
+            min-width: 100px;
         }
         .timeline-entries {
             display: flex;
@@ -1184,12 +1182,13 @@
         }
         .timeline-entry {
             display: flex;
-            gap: 0.8rem;
+            gap: 0.6rem;
             align-items: center;
             padding: 0.6rem 0.8rem;
             border: 1px solid var(--rule);
             background: var(--paper);
             transition: border-color 0.15s;
+            flex-wrap: wrap;
         }
         .timeline-entry:hover {
             border-color: var(--accent-light);
@@ -1199,11 +1198,12 @@
             font-size: 0.8rem;
             font-weight: 500;
             color: var(--accent);
-            min-width: 80px;
+            min-width: 70px;
             white-space: nowrap;
         }
         .timeline-entry-text {
             flex: 1;
+            min-width: 120px;
             font-family: var(--serif);
             font-size: 0.9rem;
             color: var(--ink);
@@ -1215,6 +1215,7 @@
         .timeline-entry-actions {
             display: flex;
             gap: 0.3rem;
+            flex-shrink: 0;
         }
 
         @media (max-width: 640px) {
@@ -1225,20 +1226,64 @@
             .app-header {
                 padding: 0.9rem 1rem;
             }
+            .app-header h1 {
+                font-size: 1.2rem;
+            }
             #reader-homepage {
                 padding: 3rem 1.5rem 3rem;
             }
             .chapter-nav-btn {
                 max-width: 100%;
             }
+            .notes-container {
+                flex-direction: column;
+            }
             .notes-sidebar {
-                width: 200px;
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid var(--rule);
+                flex-shrink: 0;
             }
             .notes-editor-area {
-                padding: 1.5rem;
+                padding: 1.2rem;
             }
             .notes-card-grid {
                 grid-template-columns: 1fr;
+            }
+            .timeline-era-setup {
+                flex-direction: column;
+                gap: 0.6rem;
+            }
+            .timeline-era-setup input {
+                width: 100%;
+            }
+            .timeline-entry {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.4rem;
+            }
+            .timeline-entry-year {
+                min-width: auto;
+            }
+            .timeline-entry-text {
+                width: 100%;
+                min-width: auto;
+            }
+            .timeline-entry-actions {
+                align-self: flex-end;
+            }
+            .notes-browser-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .btn-sm {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.68rem;
+            }
+            .header-actions {
+                gap: 0.3rem;
             }
         }
     </style>
@@ -1297,7 +1342,7 @@
                         <button class="toolbar-btn" id="tb-italic" onmousedown="e(event,'italic')"><i>I</i></button>
                         <button class="toolbar-btn" id="tb-underline" onmousedown="e(event,'underline')"><u>U</u></button>
                     </div>
-                    <div id="editor-content" contenteditable="true" onkeydown="handleEditorKey()" oninput="handleEditorInput()" onmouseup="updateToolbar()" onkeyup="updateToolbar()"></div>
+                    <div id="editor-content" contenteditable="true" onkeydown="handleEditorKey(event)" oninput="handleEditorInput()" onmouseup="updateToolbar()" onkeyup="updateToolbar()"></div>
                     <div class="editor-save-bar">
                         <div class="save-status" id="save-status">Unsaved changes</div>
                         <div id="editor-wordcount">0 words</div>
@@ -1315,35 +1360,53 @@
                 <div class="notes-editor-area" id="notes-editor-area">
                     <div class="empty-state" id="notes-empty"><p>Select a note category to begin.</p></div>
                     <div class="notes-browser" id="notes-browser" style="display:none;">
-                        <div class="notes-browser-header"><h3 id="notes-browser-title">Items</h3><button class="btn-accent" id="notes-browser-add-btn" onclick="handleNotesBrowserAdd()">＋ Add</button></div>
+                        <div class="notes-browser-header">
+                            <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+                                <button class="btn-back" id="notes-browser-back" onclick="notesBrowserBack()" title="Back">← Back</button>
+                                <h3 id="notes-browser-title">Items</h3>
+                            </div>
+                            <button class="btn-accent" id="notes-browser-add-btn" onclick="handleNotesBrowserAdd()">＋ Add</button>
+                        </div>
                         <div id="notes-browser-content"></div>
                     </div>
                     <div id="notes-editor-content" style="display:none;flex-direction:column;flex:1;">
+                        <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;flex-wrap:wrap;">
+                            <button class="btn-back" id="notes-editor-back" onclick="notesEditorBack()">← Back</button>
+                        </div>
                         <input type="text" class="notes-editor-title" id="notes-editor-title" placeholder="Note title" />
                         <div class="editor-toolbar">
                             <button class="toolbar-btn" onmousedown="notesFormat(event,'bold')"><b>B</b></button>
                             <button class="toolbar-btn" onmousedown="notesFormat(event,'italic')"><i>I</i></button>
                             <button class="toolbar-btn" onmousedown="notesFormat(event,'underline')"><u>U</u></button>
                         </div>
-                        <div id="notes-editor-body" contenteditable="true" class="notes-editor-body" oninput="notesUnsaved()"></div>
+                        <div id="notes-editor-body" contenteditable="true" class="notes-editor-body" oninput="notesUnsaved()" onkeydown="handleNotesEditorKey(event)"></div>
                         <div class="editor-save-bar">
                             <div class="save-status" id="notes-save-status">Unsaved changes</div>
                             <button class="btn-accent" onclick="saveCurrentNote()">Save Note</button>
                         </div>
                     </div>
                     <div id="notes-pc-list" style="display:none;flex-direction:column;flex:1;">
-                        <div class="notes-browser-header"><h3 id="notes-pc-list-title">Potential Chapters</h3><button class="btn-accent" onclick="openAddPotentialChapter()">＋ Add Chapter</button></div>
+                        <div class="notes-browser-header">
+                            <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+                                <button class="btn-back" onclick="notesPcListBack()">← Back</button>
+                                <h3 id="notes-pc-list-title">Potential Chapters</h3>
+                            </div>
+                            <button class="btn-accent" onclick="openAddPotentialChapter()">＋ Add Chapter</button>
+                        </div>
                         <div id="notes-pc-list-content"></div>
                     </div>
                     <div id="notes-timeline-view" style="display:none;flex-direction:column;flex:1;">
+                        <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;flex-wrap:wrap;">
+                            <button class="btn-back" onclick="notesTimelineBack()">← Back</button>
+                        </div>
                         <div class="timeline-era-setup">
                             <label>Positive suffix <input type="text" id="timeline-era-positive" placeholder="e.g. AD" onchange="timelineUnsaved()" /></label>
                             <label>Negative suffix <input type="text" id="timeline-era-negative" placeholder="e.g. BC" onchange="timelineUnsaved()" /></label>
                             <button class="btn-accent" onclick="saveTimelineSettings()" style="height:fit-content;">Save Era</button>
                         </div>
-                        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center;">
-                            <input type="number" id="timeline-new-year" placeholder="Year" style="width:80px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--sans);font-size:0.85rem;outline:none;" />
-                            <input type="text" id="timeline-new-text" placeholder="Event description" style="flex:1;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.9rem;outline:none;" />
+                        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
+                            <input type="number" id="timeline-new-year" placeholder="Year" style="width:80px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--sans);font-size:0.85rem;outline:none;min-width:60px;" />
+                            <input type="text" id="timeline-new-text" placeholder="Event description" style="flex:1;min-width:140px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.9rem;outline:none;" />
                             <button class="btn-accent" onclick="addTimelineEntry()">Add</button>
                         </div>
                         <div class="timeline-entries" id="timeline-entries"></div>
@@ -1491,6 +1554,7 @@
                 renderNotesNav();
             });
             setupScrollListener();
+            setupGlobalKeyboardShortcuts();
         }
 
         function applyBookMeta() {
@@ -1500,6 +1564,52 @@
             document.getElementById('editor-book-title').textContent = bookMeta.title || 'The Book';
             document.getElementById('reader-book-title').textContent = bookMeta.title || 'The Book';
             renderHomepage();
+        }
+
+        /* ═══════════ KEYBOARD SHORTCUTS ═══════════ */
+        function setupGlobalKeyboardShortcuts() {
+            document.addEventListener('keydown', function(evt) {
+                // Ctrl+S anywhere in the app
+                if ((evt.ctrlKey || evt.metaKey) && evt.key === 's') {
+                    evt.preventDefault();
+                    // If editor is visible and has a chapter open
+                    if (document.getElementById('v-editor').classList.contains('active')) {
+                        if (document.getElementById('notes-panel').style.display !== 'none') {
+                            // Notes panel is open
+                            if (notesCurrentCategory === 'timeline') {
+                                saveTimelineEntries();
+                            } else if (notesUnsavedFlag) {
+                                saveCurrentNote();
+                            }
+                        } else if (currentKey && document.getElementById('editor-area').style.display !== 'none') {
+                            saveCurrentChapter();
+                        }
+                    }
+                }
+            });
+        }
+
+        function handleEditorKey(evt) {
+            // Ctrl+B/I/U are handled natively by contenteditable, but we update toolbar
+            if ((evt.ctrlKey || evt.metaKey) && ['b', 'i', 'u'].includes(evt.key.toLowerCase())) {
+                // Let the browser handle it, then update toolbar after a tiny delay
+                setTimeout(updateToolbar, 10);
+            }
+            // Mark as unsaved on any key (except Ctrl+S which is caught globally)
+            if (!(evt.ctrlKey || evt.metaKey) || evt.key !== 's') {
+                document.getElementById('save-status').textContent = 'Unsaved changes';
+            }
+        }
+
+        function handleNotesEditorKey(evt) {
+            if ((evt.ctrlKey || evt.metaKey) && ['b', 'i', 'u'].includes(evt.key.toLowerCase())) {
+                setTimeout(() => {
+                    // Update notes toolbar if needed
+                }, 10);
+            }
+            if (!(evt.ctrlKey || evt.metaKey) || evt.key !== 's') {
+                notesUnsaved();
+            }
         }
 
         /* ═══════════ VIEWS ═══════════ */
@@ -1557,6 +1667,59 @@
             document.getElementById('notes-editor-content').style.display = 'none';
             document.getElementById('notes-pc-list').style.display = 'none';
             document.getElementById('notes-timeline-view').style.display = 'none'; }
+
+        /* ── Back navigation ── */
+        function notesBrowserBack() {
+            // Going back from browser view — just re-select the category (refresh)
+            if (notesCurrentCategory) selectNotesCategory(notesCurrentCategory);
+        }
+
+        function notesEditorBack() {
+            // Going back from editor view
+            if (notesCurrentCategory === 'potentialScenes' && notesCurrentChId) {
+                // Back from potential chapter editor → potential chapters list
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentChId = null;
+                showPotentialChaptersList();
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId) {
+                // Back from potential chapters list → potential scenes browser
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentPsCharId = null;
+                selectNotesCategory('potentialScenes');
+            } else if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentCharId = null;
+                selectNotesCategory('characters');
+            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentNationId = null;
+                selectNotesCategory('nations');
+            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentReligionId = null;
+                selectNotesCategory('religions');
+            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentWbId = null;
+                selectNotesCategory('worldbuilding');
+            } else if (notesCurrentCategory === 'overallStory') {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                selectNotesCategory('overallStory');
+            }
+        }
+
+        function notesPcListBack() {
+            // Back from potential chapters list → potential scenes browser
+            if (notesUnsavedFlag) saveCurrentNoteSilent();
+            notesCurrentPsCharId = null;
+            notesCurrentChId = null;
+            selectNotesCategory('potentialScenes');
+        }
+
+        function notesTimelineBack() {
+            if (timelineUnsavedFlag) saveTimelineEntriesSilent();
+            selectNotesCategory('timeline');
+        }
 
         function renderNotesNav() {
             const nav = document.getElementById('notes-nav-list');
@@ -1751,7 +1914,7 @@
                     `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No potential chapters yet. Click "+ Add Chapter" to create one.</p>`;
             } else {
                 container.innerHTML =
-                    `<div style="display:flex;flex-direction:column;gap:0.5rem;">${sorted.map(([chId,chData])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border:1px solid var(--rule);cursor:pointer;transition:border-color 0.15s;" onclick="openPotentialChapterEditor('${notesCurrentPsCharId}','${chId}')"><span style="font-family:var(--serif);font-size:1rem;color:var(--ink);">${chData.serial||''}. ${escHtml(chData.title||'Untitled')}</span><span style="display:flex;gap:0.3rem;"><button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${notesCurrentPsCharId}','${chId}')">✎</button><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${notesCurrentPsCharId}','${chId}')">✕</button></span></div>`).join('')}</div>`;
+                    `<div style="display:flex;flex-direction:column;gap:0.5rem;">${sorted.map(([chId,chData])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border:1px solid var(--rule);cursor:pointer;transition:border-color 0.15s;flex-wrap:wrap;gap:0.4rem;" onclick="openPotentialChapterEditor('${notesCurrentPsCharId}','${chId}')"><span style="font-family:var(--serif);font-size:1rem;color:var(--ink);">${chData.serial||''}. ${escHtml(chData.title||'Untitled')}</span><span style="display:flex;gap:0.3rem;"><button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${notesCurrentPsCharId}','${chId}')">✎</button><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${notesCurrentPsCharId}','${chId}')">✕</button></span></div>`).join('')}</div>`;
             }
         }
 
@@ -1810,7 +1973,6 @@
             const psId = document.getElementById('edit-pc-key').dataset.psId;
             const title = document.getElementById('edit-pc-title').value.trim() || 'Untitled';
             const serial = parseInt(document.getElementById('edit-pc-serial').value) || 1;
-            // Only update the chapter fields, preserve the character name
             if (!notesData.potentialScenes[psId].chapters[chId]) return;
             notesData.potentialScenes[psId].chapters[chId].title = title;
             notesData.potentialScenes[psId].chapters[chId].serial = serial;
@@ -1960,12 +2122,9 @@
                 notesData.characters[notesCurrentCharId].content = content;
                 await db.ref('notes/characters/' + notesCurrentCharId).update({ name: title, content });
             } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
-                // Only update chapter title/content, never overwrite the character name
                 const chObj = notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId];
-                if (chObj) {
-                    chObj.title = title;
-                    chObj.content = content;
-                }
+                if (chObj) { chObj.title = title;
+                    chObj.content = content; }
                 await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({
                     title,
                     content
@@ -2181,9 +2340,14 @@
             document.execCommand(cmd, false, null);
             updateToolbar(); }
 
-        function handleEditorKey() { document.getElementById('save-status').textContent = 'Unsaved changes';
-            updateToolbar(); }
-
+        function handleEditorKey(evt) {
+            if ((evt.ctrlKey || evt.metaKey) && ['b', 'i', 'u'].includes(evt.key.toLowerCase())) {
+                setTimeout(updateToolbar, 10);
+            }
+            if (!(evt.ctrlKey || evt.metaKey) || evt.key !== 's') {
+                document.getElementById('save-status').textContent = 'Unsaved changes';
+            }
+        }
         function handleEditorInput() { document.getElementById('save-status').textContent = 'Unsaved changes';
             updateEditorWordCount(); }
 
