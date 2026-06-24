@@ -2,22 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>The Tapestry – Notes</title>
-    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* ── Minimal reset & notes-only styles ── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; font-family: system-ui, sans-serif; background: #f7f4ee; color: #1a1714; }
+        .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; border-bottom: 1px solid #ddd5c8; background: #f7f4ee; }
+        .app-header h1 { font-family: Georgia, serif; font-weight: 300; font-size: 1.4rem; }
+        .btn-sm { padding: 0.4rem 0.8rem; border: 1px solid #ddd5c8; background: transparent; color: #8c7f70; text-decoration: none; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; border-radius: 2px; }
+        .app-body { display: flex; flex: 1; overflow: hidden; }
+        .notes-sidebar { width: 240px; border-right: 1px solid #ddd5c8; background: #f3efe8; overflow-y: auto; flex-shrink: 0; }
+        .notes-sidebar-header { padding: 1rem 1.2rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #8c7f70; border-bottom: 1px solid #ddd5c8; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-add-btn { background: none; border: none; font-size: 1.2rem; color: #5c3d2e; cursor: pointer; }
+        .notes-nav-list { list-style: none; padding: 0.3rem 0; }
+        .notes-nav-category { padding: 0.55rem 1.2rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; border-left: 3px solid transparent; transition: background 0.15s; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .notes-nav-category.active { border-left-color: #5c3d2e; background: rgba(92,61,46,0.08); font-weight: 500; }
+        .notes-nav-category:hover { background: rgba(92,61,46,0.06); }
+        .notes-editor-area { flex: 1; padding: 1.5rem; overflow-y: auto; }
+        .empty-state { text-align: center; color: #8c7f70; margin-top: 3rem; }
+        .notes-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; }
+        .notes-card { border: 1px solid #ddd5c8; padding: 1rem; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .notes-card:hover { border-color: #5c3d2e; }
+        .btn-accent { padding: 0.5rem 1rem; background: #5c3d2e; color: #fff; border: none; cursor: pointer; font-size: 0.8rem; text-transform: uppercase; }
+        .btn-back { background: none; border: 1px solid #ddd5c8; padding: 0.35rem 0.8rem; cursor: pointer; color: #8c7f70; font-size: 0.72rem; text-transform: uppercase; }
+        @media (max-width: 640px) {
+            .app-body { flex-direction: column; }
+            .notes-sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 2px solid #ddd5c8; }
+            .notes-nav-list { display: flex; flex-wrap: wrap; }
+            .notes-nav-category { border-left: none; border-bottom: 2px solid transparent; padding: 0.5rem 0.8rem; font-size: 0.7rem; }
+            .notes-nav-category.active { border-bottom-color: #5c3d2e; border-left-color: transparent; }
+        }
+    </style>
 </head>
 <body>
-    <div class="view active" style="display:flex; flex-direction:column; height:100%;">
+    <div style="display:flex; flex-direction:column; height:100%;">
         <div class="app-header">
-            <div style="display:flex;align-items:center;gap:0.8rem;">
-                <h1>Notes</h1>
-            </div>
-            <div class="header-actions">
-                <a href="editor.html" class="btn-sm">← Back to Editor</a>
-            </div>
+            <h1>Notes</h1>
+            <a href="editor.html" class="btn-sm">← Back to Editor</a>
         </div>
         <div class="app-body">
-            <div class="notes-sidebar" id="notes-sidebar">
+            <div class="notes-sidebar">
                 <div class="notes-sidebar-header">
                     Categories
                     <button class="sidebar-add-btn" onclick="handleNotesAdd()">＋</button>
@@ -26,99 +51,14 @@
             </div>
             <div class="notes-editor-area" id="notes-editor-area">
                 <div class="empty-state" id="notes-empty"><p>Loading notes…</p></div>
-                <div class="notes-browser" id="notes-browser" style="display:none;">
-                    <div class="notes-browser-header">
-                        <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
-                            <button class="btn-back" onclick="notesBrowserBack()">← Back</button>
-                            <h3 id="notes-browser-title">Items</h3>
-                        </div>
-                        <button class="btn-accent" onclick="handleNotesBrowserAdd()">＋ Add</button>
+                <div id="notes-browser" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+                        <button class="btn-back" onclick="notesBrowserBack()">← Back</button>
+                        <h3 id="notes-browser-title" style="font-family:Georgia,serif; font-weight:300;">Items</h3>
+                        <button class="btn-accent" onclick="handleNotesBrowserAdd()" style="margin-left:auto;">＋ Add</button>
                     </div>
                     <div id="notes-browser-content"></div>
                 </div>
-                <div id="notes-editor-content" style="display:none;flex-direction:column;flex:1;">
-                    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;flex-wrap:wrap;">
-                        <button class="btn-back" onclick="notesEditorBack()">← Back</button>
-                    </div>
-                    <input type="text" class="notes-editor-title" id="notes-editor-title" placeholder="Note title" />
-                    <div class="editor-toolbar">
-                        <button class="toolbar-btn" onmousedown="notesFormat(event,'bold')"><b>B</b></button>
-                        <button class="toolbar-btn" onmousedown="notesFormat(event,'italic')"><i>I</i></button>
-                        <button class="toolbar-btn" onmousedown="notesFormat(event,'underline')"><u>U</u></button>
-                    </div>
-                    <div id="notes-editor-body" contenteditable="true" class="notes-editor-body" oninput="notesUnsaved()" onkeydown="handleNotesEditorKey(event)"></div>
-                    <div class="editor-save-bar">
-                        <div class="save-status" id="notes-save-status">Unsaved changes</div>
-                        <button class="btn-accent" onclick="saveCurrentNote()">Save Note</button>
-                    </div>
-                </div>
-                <div id="notes-pc-list" style="display:none;flex-direction:column;flex:1;">
-                    <div class="notes-browser-header">
-                        <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
-                            <button class="btn-back" onclick="notesPcListBack()">← Back</button>
-                            <h3 id="notes-pc-list-title">Potential Chapters</h3>
-                        </div>
-                        <button class="btn-accent" onclick="openAddPotentialChapter()">＋ Add Chapter</button>
-                    </div>
-                    <div id="notes-pc-list-content"></div>
-                </div>
-                <div id="notes-timeline-view" style="display:none;flex-direction:column;flex:1;">
-                    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;flex-wrap:wrap;">
-                        <button class="btn-back" onclick="notesTimelineBack()">← Back</button>
-                    </div>
-                    <div class="timeline-era-setup">
-                        <label>Positive suffix <input type="text" id="timeline-era-positive" placeholder="e.g. AD" onchange="timelineUnsaved()" /></label>
-                        <label>Negative suffix <input type="text" id="timeline-era-negative" placeholder="e.g. BC" onchange="timelineUnsaved()" /></label>
-                        <button class="btn-accent" onclick="saveTimelineSettings()" style="height:fit-content;">Save Era</button>
-                    </div>
-                    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
-                        <input type="number" id="timeline-new-year" placeholder="Year" style="width:80px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--sans);font-size:0.85rem;outline:none;min-width:60px;" />
-                        <input type="text" id="timeline-new-text" placeholder="Event description" style="flex:1;min-width:140px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.9rem;outline:none;" />
-                        <button class="btn-accent" onclick="addTimelineEntry()">Add</button>
-                    </div>
-                    <div class="timeline-entries" id="timeline-entries"></div>
-                    <div class="editor-save-bar">
-                        <div class="save-status" id="timeline-save-status"></div>
-                        <button class="btn-accent" onclick="saveTimelineEntries()">Save Timeline</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div class="modal-overlay" id="modal-add-item">
-        <div class="modal">
-            <h2 id="modal-add-item-title">Add Item</h2>
-            <label>Name <input type="text" id="new-item-name" placeholder="Name" /></label>
-            <div class="error-msg" id="add-item-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-add-item')">Cancel</button>
-                <button class="btn-accent" id="modal-add-item-btn" onclick="addNotesItem()">Add</button>
-            </div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modal-add-potential-chapter">
-        <div class="modal">
-            <h2>Add Potential Chapter</h2>
-            <label>Title <input type="text" id="new-pc-title" placeholder="Chapter title" /></label>
-            <label>Serial (order) <input type="number" id="new-pc-serial" min="1" value="1" /></label>
-            <div class="error-msg" id="add-pc-error"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-add-potential-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="addPotentialChapter()">Add</button>
-            </div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modal-edit-potential-chapter">
-        <div class="modal">
-            <h2>Edit Potential Chapter</h2>
-            <input type="hidden" id="edit-pc-key" />
-            <label>Title <input type="text" id="edit-pc-title" /></label>
-            <label>Serial (order) <input type="number" id="edit-pc-serial" min="1" /></label>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-edit-potential-chapter')">Cancel</button>
-                <button class="btn-accent" onclick="savePotentialChapterMeta()">Save</button>
             </div>
         </div>
     </div>
@@ -126,10 +66,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script>
-        // -------------------------------------------------------------------------
-        // 1. Firebase Init
-        // -------------------------------------------------------------------------
-        const firebaseConfig = {
+        // Firebase init
+        firebase.initializeApp({
             apiKey: "AIzaSyAwktvktXaaRxFPX500kOBcvuUtOjRjz6M",
             authDomain: "wakanda-shit.firebaseapp.com",
             databaseURL: "https://wakanda-shit-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -137,507 +75,114 @@
             storageBucket: "wakanda-shit.firebasestorage.app",
             messagingSenderId: "491323769717",
             appId: "1:491323769717:web:825b6044e43e672404493c"
-        };
-        firebase.initializeApp(firebaseConfig);
+        });
         const db = firebase.database();
 
-        // -------------------------------------------------------------------------
-        // 2. Utilities (global)
-        // -------------------------------------------------------------------------
-        function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        // State
+        let notesData = { potentialScenes:{}, characters:{}, nations:{}, religions:{}, worldbuilding:{} };
+        let currentCategory = null;
+        let addMode = null;
 
-        // -------------------------------------------------------------------------
-        // 3. Global state
-        // -------------------------------------------------------------------------
-        let notesData = {
-            characters: {},
-            potentialScenes: {},
-            nations: {},
-            religions: {},
-            worldbuilding: {},
-            overallStory: { content: '' },
-            timeline: { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] }
-        };
-        let notesCurrentCategory = null;
-        let notesCurrentCharId = null;
-        let notesCurrentPsCharId = null;
-        let notesCurrentChId = null;
-        let notesCurrentNationId = null;
-        let notesCurrentReligionId = null;
-        let notesCurrentWbId = null;
-        let notesUnsavedFlag = false;
-        let timelineUnsavedFlag = false;
-        let notesAddMode = null;
-        let _pendingPsCharAdd = false;
+        function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-        // -------------------------------------------------------------------------
-        // 4. Core functions (all global, attached to window)
-        // -------------------------------------------------------------------------
-        function hideAllNotesViews() {
-            document.getElementById('notes-empty').style.display = 'none';
-            document.getElementById('notes-browser').style.display = 'none';
-            document.getElementById('notes-editor-content').style.display = 'none';
-            document.getElementById('notes-pc-list').style.display = 'none';
-            document.getElementById('notes-timeline-view').style.display = 'none';
-        }
-
-        function renderNotesNav() {
+        function renderNav() {
             const nav = document.getElementById('notes-nav-list');
             if (!nav) return;
-            const ps = Object.keys(notesData.potentialScenes).length;
-            const ch = Object.keys(notesData.characters).length;
-            const na = Object.keys(notesData.nations).length;
-            const re = Object.keys(notesData.religions).length;
-            const wb = Object.keys(notesData.worldbuilding).length;
-
-            nav.innerHTML = `
-                <li class="notes-nav-category ${notesCurrentCategory==='potentialScenes'?'active':''}" onclick="selectNotesCategory('potentialScenes')"><span class="cat-icon">🎬</span> Potential Scenes <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${ps}</span></li>
-                <li class="notes-nav-category ${notesCurrentCategory==='characters'?'active':''}" onclick="selectNotesCategory('characters')"><span class="cat-icon">👤</span> Characters <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${ch}</span></li>
-                <li class="notes-nav-category ${notesCurrentCategory==='nations'?'active':''}" onclick="selectNotesCategory('nations')"><span class="cat-icon">🏴</span> Nations <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${na}</span></li>
-                <li class="notes-nav-category ${notesCurrentCategory==='religions'?'active':''}" onclick="selectNotesCategory('religions')"><span class="cat-icon">☀️</span> Religions <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${re}</span></li>
-                <li class="notes-nav-category ${notesCurrentCategory==='worldbuilding'?'active':''}" onclick="selectNotesCategory('worldbuilding')"><span class="cat-icon">📜</span> Worldbuilding <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${wb}</span></li>
-                <li class="notes-nav-category ${notesCurrentCategory==='overallStory'?'active':''}" onclick="selectNotesCategory('overallStory')"><span class="cat-icon">📖</span> Overall Story</li>
-                <li class="notes-nav-category ${notesCurrentCategory==='timeline'?'active':''}" onclick="selectNotesCategory('timeline')"><span class="cat-icon">⏳</span> Sort Timeline</li>`;
-
-            if (notesCurrentCategory === 'potentialScenes') {
-                const sub = document.createElement('ul');
-                sub.className = 'notes-sub-list';
-                Object.entries(notesData.potentialScenes).forEach(([id, d]) => {
-                    const li = document.createElement('li');
-                    li.className = 'notes-sub-item' + (notesCurrentPsCharId === id ? ' active' : '');
-                    li.innerHTML = `<span onclick="selectPotentialScenesCharacter('${id}')" style="flex:1;">${escHtml(d.name || 'Unnamed')}</span><span class="sub-actions"><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialScenesCharacter('${id}')">✕</button></span>`;
-                    sub.appendChild(li);
-                });
-                nav.appendChild(sub);
-            }
+            nav.innerHTML = '';
+            const categories = [
+                { key:'potentialScenes', label:'🎬 Potential Scenes', count:Object.keys(notesData.potentialScenes).length },
+                { key:'characters', label:'👤 Characters', count:Object.keys(notesData.characters).length },
+                { key:'nations', label:'🏴 Nations', count:Object.keys(notesData.nations).length },
+                { key:'religions', label:'☀️ Religions', count:Object.keys(notesData.religions).length },
+                { key:'worldbuilding', label:'📜 Worldbuilding', count:Object.keys(notesData.worldbuilding).length }
+            ];
+            categories.forEach(cat => {
+                const li = document.createElement('li');
+                li.className = 'notes-nav-category' + (currentCategory === cat.key ? ' active' : '');
+                li.innerHTML = `<span>${cat.label}</span> <span style="margin-left:auto;font-size:0.7rem;opacity:0.6;">${cat.count}</span>`;
+                li.onclick = function() { selectCategory(cat.key); };
+                nav.appendChild(li);
+            });
         }
 
-        function selectNotesCategory(cat) {
-            if (notesUnsavedFlag && notesCurrentCategory !== 'timeline') saveCurrentNoteSilent();
-            if (timelineUnsavedFlag && notesCurrentCategory === 'timeline') saveTimelineEntriesSilent();
-            notesCurrentCategory = cat;
-            notesCurrentCharId = null; notesCurrentPsCharId = null; notesCurrentChId = null;
-            notesCurrentNationId = null; notesCurrentReligionId = null; notesCurrentWbId = null;
-            notesUnsavedFlag = false; timelineUnsavedFlag = false;
-            hideAllNotesViews();
-            if (cat === 'potentialScenes') showNotesBrowser('Potential Scenes', 'potentialScenes', notesData.potentialScenes);
-            else if (cat === 'characters') showNotesBrowser('Characters', 'characters', notesData.characters);
-            else if (cat === 'nations') showNotesBrowser('Nations', 'nations', notesData.nations);
-            else if (cat === 'religions') showNotesBrowser('Religions', 'religions', notesData.religions);
-            else if (cat === 'worldbuilding') showNotesBrowser('Worldbuilding', 'worldbuilding', notesData.worldbuilding);
-            else if (cat === 'overallStory') loadOverallStoryEditor();
-            else if (cat === 'timeline') loadTimelineView();
-            renderNotesNav();
+        function selectCategory(cat) {
+            currentCategory = cat;
+            document.getElementById('notes-empty').style.display = 'none';
+            document.getElementById('notes-browser').style.display = 'block';
+            document.getElementById('notes-browser-title').textContent = cat.charAt(0).toUpperCase()+cat.slice(1);
+            addMode = cat;
+            renderCards(notesData[cat] || {});
+            renderNav();
         }
 
-        function showNotesBrowser(title, dataKey, dataObj) {
-            hideAllNotesViews();
-            document.getElementById('notes-browser').style.display = 'flex';
-            document.getElementById('notes-browser-title').textContent = title;
-            notesAddMode = dataKey;
+        function renderCards(dataObj) {
+            const container = document.getElementById('notes-browser-content');
             const entries = Object.entries(dataObj);
-            document.getElementById('notes-browser-content').innerHTML = entries.length
-                ? `<div class="notes-card-grid">${entries.map(([id, d]) => `<div class="notes-card" onclick="openNotesItem('${dataKey}','${id}')"><span class="notes-card-name">${escHtml(d.name || 'Unnamed')}</span><span class="notes-card-actions"><button class="icon-btn danger" onclick="event.stopPropagation();deleteNotesItem('${dataKey}','${id}')">✕</button></span></div>`).join('')}</div>`
-                : `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No items yet. Click "+ Add" to create one.</p>`;
+            if (!entries.length) {
+                container.innerHTML = '<p style="color:#8c7f70; text-align:center; padding:2rem;">No items yet. Click "+ Add" to create one.</p>';
+                return;
+            }
+            container.innerHTML = `<div class="notes-card-grid">${entries.map(([id, d]) => `
+                <div class="notes-card" onclick="openItem('${addMode}','${id}')">
+                    <span>${escHtml(d.name || 'Unnamed')}</span>
+                    <button class="btn-sm" style="font-size:0.7rem;" onclick="event.stopPropagation();deleteItem('${addMode}','${id}')">✕</button>
+                </div>`).join('')}</div>`;
         }
 
-        function handleNotesBrowserAdd() {
-            if (notesAddMode === 'potentialScenes') openAddPotentialScenesCharacter();
-            else openAddItem(notesAddMode);
-        }
         function handleNotesAdd() { handleNotesBrowserAdd(); }
-
-        function openAddItem(mode) {
-            notesAddMode = mode; _pendingPsCharAdd = false;
-            const titles = { characters: 'Add Character', nations: 'Add Nation', religions: 'Add Religion', worldbuilding: 'Add Worldbuilding Reference' };
-            document.getElementById('modal-add-item-title').textContent = titles[mode] || 'Add Item';
-            document.getElementById('new-item-name').value = '';
-            document.getElementById('add-item-error').textContent = '';
-            openModal('modal-add-item');
+        function handleNotesBrowserAdd() {
+            const name = prompt('Enter name:');
+            if (!name) return;
+            const id = db.ref('notes/' + addMode).push().key;
+            notesData[addMode][id] = { name, content: '' };
+            db.ref('notes/' + addMode + '/' + id).set({ name, content: '' });
+            renderCards(notesData[addMode]);
+            renderNav();
         }
 
-        async function addNotesItem() {
-            const name = document.getElementById('new-item-name').value.trim();
-            if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
-            const mode = notesAddMode; closeModal('modal-add-item');
-            if (mode === 'characters') {
-                const id = db.ref('notes/characters').push().key;
-                notesData.characters[id] = { name, content: '' };
-                await db.ref('notes/characters/' + id).set({ name, content: '' });
-                notesCurrentCharId = id; loadProfileEditor('characters', id);
-            } else if (mode === 'nations') {
-                const id = db.ref('notes/nations').push().key;
-                notesData.nations[id] = { name, content: '' };
-                await db.ref('notes/nations/' + id).set({ name, content: '' });
-                notesCurrentNationId = id; loadProfileEditor('nations', id);
-            } else if (mode === 'religions') {
-                const id = db.ref('notes/religions').push().key;
-                notesData.religions[id] = { name, content: '' };
-                await db.ref('notes/religions/' + id).set({ name, content: '' });
-                notesCurrentReligionId = id; loadProfileEditor('religions', id);
-            } else if (mode === 'worldbuilding') {
-                const id = db.ref('notes/worldbuilding').push().key;
-                notesData.worldbuilding[id] = { name, content: '' };
-                await db.ref('notes/worldbuilding/' + id).set({ name, content: '' });
-                notesCurrentWbId = id; loadProfileEditor('worldbuilding', id);
-            }
-            renderNotesNav();
+        function openItem(mode, id) {
+            const item = notesData[mode][id];
+            if (!item) return;
+            alert('Name: ' + item.name + '\nContent: ' + (item.content || 'empty'));
         }
 
-        function openAddPotentialScenesCharacter() {
-            notesAddMode = 'potentialScenes'; _pendingPsCharAdd = true;
-            document.getElementById('modal-add-item-title').textContent = 'Add Character';
-            document.getElementById('new-item-name').value = '';
-            document.getElementById('add-item-error').textContent = '';
-            openModal('modal-add-item');
-        }
-        async function _doAddPsCharacter() {
-            const name = document.getElementById('new-item-name').value.trim();
-            if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
-            const id = db.ref('notes/potentialScenes').push().key;
-            notesData.potentialScenes[id] = { name, chapters: {} };
-            await db.ref('notes/potentialScenes/' + id).set({ name, chapters: {} });
-            closeModal('modal-add-item'); _pendingPsCharAdd = false;
-            notesCurrentPsCharId = id; notesCurrentChId = null;
-            showPotentialChaptersList(); renderNotesNav();
+        async function deleteItem(mode, id) {
+            if (!confirm('Delete?')) return;
+            delete notesData[mode][id];
+            await db.ref('notes/' + mode + '/' + id).remove();
+            renderCards(notesData[mode]);
+            renderNav();
         }
 
-        // Modify the add button to detect PS character add
-        document.addEventListener('DOMContentLoaded', function() {
-            const btn = document.getElementById('modal-add-item-btn');
-            if (btn) {
-                btn.addEventListener('click', function(e) {
-                    if (_pendingPsCharAdd) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        _doAddPsCharacter();
-                    }
-                });
-            }
-        });
-
-        function openNotesItem(dataKey, id) {
-            if (dataKey === 'potentialScenes') selectPotentialScenesCharacter(id);
-            else if (dataKey === 'characters') { notesCurrentCharId = id; loadProfileEditor('characters', id); renderNotesNav(); }
-            else if (dataKey === 'nations') { notesCurrentNationId = id; loadProfileEditor('nations', id); renderNotesNav(); }
-            else if (dataKey === 'religions') { notesCurrentReligionId = id; loadProfileEditor('religions', id); renderNotesNav(); }
-            else if (dataKey === 'worldbuilding') { notesCurrentWbId = id; loadProfileEditor('worldbuilding', id); renderNotesNav(); }
+        function notesBrowserBack() {
+            document.getElementById('notes-browser').style.display = 'none';
+            document.getElementById('notes-empty').style.display = 'block';
+            currentCategory = null;
+            renderNav();
         }
 
-        function loadProfileEditor(cat, id) {
-            const data = notesData[cat]?.[id]; if (!data) return;
-            hideAllNotesViews();
-            document.getElementById('notes-editor-content').style.display = 'flex';
-            document.getElementById('notes-editor-title').value = data.name || '';
-            document.getElementById('notes-editor-body').innerHTML = data.content || '';
-            document.getElementById('notes-save-status').textContent = 'Saved';
-            notesUnsavedFlag = false;
-        }
-
-        function loadOverallStoryEditor() {
-            hideAllNotesViews();
-            document.getElementById('notes-editor-content').style.display = 'flex';
-            document.getElementById('notes-editor-title').value = 'Overall Story';
-            document.getElementById('notes-editor-title').readOnly = true;
-            document.getElementById('notes-editor-body').innerHTML = notesData.overallStory.content || '';
-            document.getElementById('notes-save-status').textContent = 'Saved';
-            notesUnsavedFlag = false;
-        }
-
-        async function deleteNotesItem(dataKey, id) {
-            if (!confirm('Delete this item?')) return;
-            const paths = { characters:'notes/characters', potentialScenes:'notes/potentialScenes', nations:'notes/nations', religions:'notes/religions', worldbuilding:'notes/worldbuilding' };
-            delete notesData[dataKey][id];
-            await db.ref(paths[dataKey] + '/' + id).remove();
-            if (dataKey==='potentialScenes' && notesCurrentPsCharId===id) { notesCurrentPsCharId=null; notesCurrentChId=null; }
-            else if (dataKey==='characters' && notesCurrentCharId===id) notesCurrentCharId=null;
-            else if (dataKey==='nations' && notesCurrentNationId===id) notesCurrentNationId=null;
-            else if (dataKey==='religions' && notesCurrentReligionId===id) notesCurrentReligionId=null;
-            else if (dataKey==='worldbuilding' && notesCurrentWbId===id) notesCurrentWbId=null;
-            hideAllNotesViews(); selectNotesCategory(notesCurrentCategory); renderNotesNav();
-        }
-
-        function selectPotentialScenesCharacter(psId) {
-            notesCurrentPsCharId = psId; notesCurrentChId = null; notesUnsavedFlag = false;
-            showPotentialChaptersList(); renderNotesNav();
-        }
-
-        async function deletePotentialScenesCharacter(psId) {
-            if (!confirm('Delete this character and all their potential chapters?')) return;
-            delete notesData.potentialScenes[psId];
-            await db.ref('notes/potentialScenes/' + psId).remove();
-            if (notesCurrentPsCharId === psId) { notesCurrentPsCharId = null; notesCurrentChId = null; }
-            hideAllNotesViews(); selectNotesCategory('potentialScenes'); renderNotesNav();
-        }
-
-        function showPotentialChaptersList() {
-            if (!notesCurrentPsCharId) return;
-            hideAllNotesViews();
-            const d = notesData.potentialScenes[notesCurrentPsCharId]; if (!d) return;
-            document.getElementById('notes-pc-list').style.display = 'flex';
-            document.getElementById('notes-pc-list-title').textContent = (d.name || 'Character') + ' — Chapters';
-            const chs = d.chapters || {};
-            const sorted = Object.entries(chs).sort((a,b) => (a[1].serial||0) - (b[1].serial||0));
-            document.getElementById('notes-pc-list-content').innerHTML = sorted.length
-                ? `<div style="display:flex;flex-direction:column;gap:0.5rem;">${sorted.map(([cid, cd]) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border:1px solid var(--rule);cursor:pointer;flex-wrap:wrap;gap:0.4rem;" onclick="openPotentialChapterEditor('${notesCurrentPsCharId}','${cid}')"><span style="font-family:var(--serif);font-size:1rem;color:var(--ink);">${cd.serial||''}. ${escHtml(cd.title||'Untitled')}</span><span style="display:flex;gap:0.3rem;"><button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${notesCurrentPsCharId}','${cid}')">✎</button><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${notesCurrentPsCharId}','${cid}')">✕</button></span></div>`).join('')}</div>`
-                : `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No potential chapters yet. Click "+ Add Chapter" to create one.</p>`;
-        }
-
-        function openPotentialChapterEditor(psId, chId) {
-            notesCurrentPsCharId = psId; notesCurrentChId = chId; notesUnsavedFlag = false;
-            const cd = notesData.potentialScenes[psId]?.chapters?.[chId]; if (!cd) return;
-            hideAllNotesViews();
-            document.getElementById('notes-editor-content').style.display = 'flex';
-            document.getElementById('notes-editor-title').value = cd.title || '';
-            document.getElementById('notes-editor-body').innerHTML = cd.content || '';
-            document.getElementById('notes-save-status').textContent = 'Saved';
-        }
-
-        function openAddPotentialChapter() {
-            if (!notesCurrentPsCharId) return;
-            const d = notesData.potentialScenes[notesCurrentPsCharId];
-            document.getElementById('new-pc-title').value = '';
-            document.getElementById('new-pc-serial').value = (d && d.chapters ? Object.keys(d.chapters).length : 0) + 1;
-            document.getElementById('add-pc-error').textContent = '';
-            openModal('modal-add-potential-chapter');
-        }
-
-        async function addPotentialChapter() {
-            if (!notesCurrentPsCharId) return;
-            const title = document.getElementById('new-pc-title').value.trim();
-            const serial = parseInt(document.getElementById('new-pc-serial').value) || 1;
-            if (!title) { document.getElementById('add-pc-error').textContent = 'Title required.'; return; }
-            const chId = db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters').push().key;
-            if (!notesData.potentialScenes[notesCurrentPsCharId].chapters) notesData.potentialScenes[notesCurrentPsCharId].chapters = {};
-            notesData.potentialScenes[notesCurrentPsCharId].chapters[chId] = { title, serial, content: '' };
-            await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + chId).set({ title, serial, content: '' });
-            closeModal('modal-add-potential-chapter');
-            notesCurrentChId = chId;
-            openPotentialChapterEditor(notesCurrentPsCharId, chId);
-            renderNotesNav();
-        }
-
-        function openEditPotentialChapter(psId, chId) {
-            const cd = notesData.potentialScenes[psId]?.chapters?.[chId]; if (!cd) return;
-            document.getElementById('edit-pc-key').value = chId;
-            document.getElementById('edit-pc-key').dataset.psId = psId;
-            document.getElementById('edit-pc-title').value = cd.title || '';
-            document.getElementById('edit-pc-serial').value = cd.serial || 1;
-            openModal('modal-edit-potential-chapter');
-        }
-
-        async function savePotentialChapterMeta() {
-            const chId = document.getElementById('edit-pc-key').value;
-            const psId = document.getElementById('edit-pc-key').dataset.psId;
-            const title = document.getElementById('edit-pc-title').value.trim() || 'Untitled';
-            const serial = parseInt(document.getElementById('edit-pc-serial').value) || 1;
-            if (!notesData.potentialScenes[psId]?.chapters?.[chId]) return;
-            notesData.potentialScenes[psId].chapters[chId].title = title;
-            notesData.potentialScenes[psId].chapters[chId].serial = serial;
-            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).update({ title, serial });
-            if (notesCurrentChId === chId) document.getElementById('notes-editor-title').value = title;
-            closeModal('modal-edit-potential-chapter');
-            showPotentialChaptersList(); renderNotesNav();
-        }
-
-        async function deletePotentialChapter(psId, chId) {
-            if (!confirm('Delete this potential chapter?')) return;
-            delete notesData.potentialScenes[psId].chapters[chId];
-            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).remove();
-            if (notesCurrentChId === chId) { notesCurrentChId = null; hideAllNotesViews(); showPotentialChaptersList(); }
-            else showPotentialChaptersList();
-            renderNotesNav();
-        }
-
-        // ── Timeline ──
-        function loadTimelineView() {
-            hideAllNotesViews();
-            document.getElementById('notes-timeline-view').style.display = 'flex';
-            document.getElementById('timeline-era-positive').value = notesData.timeline.positiveSuffix || 'AD';
-            document.getElementById('timeline-era-negative').value = notesData.timeline.negativeSuffix || 'BC';
-            renderTimelineEntries(); timelineUnsavedFlag = false;
-            document.getElementById('timeline-save-status').textContent = '';
-        }
-        function formatTimelineYear(y) {
-            const p = notesData.timeline.positiveSuffix || 'AD', n = notesData.timeline.negativeSuffix || 'BC';
-            return y >= 0 ? y + ' ' + p : Math.abs(y) + ' ' + n;
-        }
-        function renderTimelineEntries() {
-            const entries = (notesData.timeline.entries || []).slice().sort((a,b) => (a.year||0) - (b.year||0));
-            document.getElementById('timeline-entries').innerHTML = entries.map((en, i) =>
-                `<div class="timeline-entry"><span class="timeline-entry-year">${formatTimelineYear(en.year||0)}</span><input type="text" class="timeline-entry-text" value="${escHtml(en.text||'')}" onchange="updateTimelineEntry(${i},this.value)" /><span class="timeline-entry-actions"><button class="icon-btn danger" onclick="deleteTimelineEntry(${i})">✕</button></span></div>`
-            ).join('');
-        }
-        function addTimelineEntry() {
-            const y = parseInt(document.getElementById('timeline-new-year').value);
-            const t = document.getElementById('timeline-new-text').value.trim();
-            if (isNaN(y) || !t) return;
-            notesData.timeline.entries.push({ year: y, text: t });
-            document.getElementById('timeline-new-year').value = '';
-            document.getElementById('timeline-new-text').value = '';
-            timelineUnsavedFlag = true; document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
-            renderTimelineEntries();
-        }
-        function updateTimelineEntry(idx, txt) {
-            const sorted = notesData.timeline.entries.slice().sort((a,b) => (a.year||0) - (b.year||0));
-            const entry = sorted[idx]; const orig = notesData.timeline.entries.indexOf(entry);
-            if (orig >= 0) notesData.timeline.entries[orig].text = txt;
-            timelineUnsavedFlag = true; document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
-        }
-        function deleteTimelineEntry(idx) {
-            const sorted = notesData.timeline.entries.slice().sort((a,b) => (a.year||0) - (b.year||0));
-            const entry = sorted[idx]; const orig = notesData.timeline.entries.indexOf(entry);
-            if (orig >= 0) notesData.timeline.entries.splice(orig, 1);
-            timelineUnsavedFlag = true; document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
-            renderTimelineEntries();
-        }
-        async function saveTimelineSettings() {
-            const p = document.getElementById('timeline-era-positive').value.trim() || 'AD';
-            const n = document.getElementById('timeline-era-negative').value.trim() || 'BC';
-            notesData.timeline.positiveSuffix = p; notesData.timeline.negativeSuffix = n;
-            await db.ref('notes/timeline/positiveSuffix').set(p);
-            await db.ref('notes/timeline/negativeSuffix').set(n);
-            renderTimelineEntries(); document.getElementById('timeline-save-status').textContent = 'Era saved ✓';
-        }
-        async function saveTimelineEntries() {
-            await db.ref('notes/timeline/entries').set(notesData.timeline.entries || []);
-            timelineUnsavedFlag = false; document.getElementById('timeline-save-status').textContent = 'Timeline saved ✓';
-        }
-        async function saveTimelineEntriesSilent() {
-            await db.ref('notes/timeline/entries').set(notesData.timeline.entries || []);
-            timelineUnsavedFlag = false;
-        }
-        function timelineUnsaved() {
-            timelineUnsavedFlag = true; document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
-        }
-
-        // ── Note saving ──
-        function notesUnsaved() { notesUnsavedFlag = true; document.getElementById('notes-save-status').textContent = 'Unsaved changes'; }
-        function handleNotesEditorKey(evt) {
-            if ((evt.ctrlKey||evt.metaKey) && ['b','i','u'].includes(evt.key.toLowerCase())) { /* native */ }
-            if (!(evt.ctrlKey||evt.metaKey) || evt.key !== 's') notesUnsaved();
-        }
-        function notesFormat(evt, cmd) { evt.preventDefault(); document.execCommand(cmd, false, null); }
-
-        async function saveCurrentNote() {
-            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-            const content = document.getElementById('notes-editor-body').innerHTML;
-            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
-                notesData.characters[notesCurrentCharId] = { name: title, content };
-                await db.ref('notes/characters/' + notesCurrentCharId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
-                if (notesData.potentialScenes[notesCurrentPsCharId]?.chapters?.[notesCurrentChId]) {
-                    notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].title = title;
-                    notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId].content = content;
-                }
-                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
-            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
-                notesData.nations[notesCurrentNationId] = { name: title, content };
-                await db.ref('notes/nations/' + notesCurrentNationId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
-                notesData.religions[notesCurrentReligionId] = { name: title, content };
-                await db.ref('notes/religions/' + notesCurrentReligionId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
-                notesData.worldbuilding[notesCurrentWbId] = { name: title, content };
-                await db.ref('notes/worldbuilding/' + notesCurrentWbId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'overallStory') {
-                notesData.overallStory.content = content;
-                await db.ref('notes/overallStory/content').set(content);
-            }
-            notesUnsavedFlag = false; document.getElementById('notes-save-status').textContent = 'Saved ✓'; renderNotesNav();
-        }
-
-        async function saveCurrentNoteSilent() {
-            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
-            const content = document.getElementById('notes-editor-body').innerHTML;
-            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
-                await db.ref('notes/characters/' + notesCurrentCharId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
-                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
-            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
-                await db.ref('notes/nations/' + notesCurrentNationId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
-                await db.ref('notes/religions/' + notesCurrentReligionId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
-                await db.ref('notes/worldbuilding/' + notesCurrentWbId).set({ name: title, content });
-            } else if (notesCurrentCategory === 'overallStory') {
-                await db.ref('notes/overallStory/content').set(content);
-            }
-            notesUnsavedFlag = false;
-        }
-
-        function notesEditorBack() {
-            if (notesCurrentCategory === 'potentialScenes' && notesCurrentChId) {
-                if (notesUnsavedFlag) saveCurrentNoteSilent();
-                notesCurrentChId = null; showPotentialChaptersList();
-            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId) {
-                if (notesUnsavedFlag) saveCurrentNoteSilent();
-                notesCurrentPsCharId = null; selectNotesCategory('potentialScenes');
-            } else if (notesCurrentCharId) { notesCurrentCharId = null; selectNotesCategory(notesCurrentCategory); }
-            else if (notesCurrentNationId) { notesCurrentNationId = null; selectNotesCategory('nations'); }
-            else if (notesCurrentReligionId) { notesCurrentReligionId = null; selectNotesCategory('religions'); }
-            else if (notesCurrentWbId) { notesCurrentWbId = null; selectNotesCategory('worldbuilding'); }
-            else selectNotesCategory(notesCurrentCategory);
-        }
-        function notesPcListBack() {
-            if (notesUnsavedFlag) saveCurrentNoteSilent();
-            notesCurrentPsCharId = null; notesCurrentChId = null; selectNotesCategory('potentialScenes');
-        }
-        function notesTimelineBack() {
-            if (timelineUnsavedFlag) saveTimelineEntriesSilent();
-            selectNotesCategory('timeline');
-        }
-        function notesBrowserBack() { if (notesCurrentCategory) selectNotesCategory(notesCurrentCategory); }
-
-        // -------------------------------------------------------------------------
-        // 5. Start everything
-        // -------------------------------------------------------------------------
-        (async function init() {
-            // Wait a tiny bit for mobile Firebase to be ready
-            await new Promise(r => setTimeout(r, 100));
-
-            document.getElementById('notes-empty').querySelector('p').textContent = 'Loading notes…';
+        // Load data
+        (async function() {
             const snap = await db.ref('notes').once('value');
             if (snap.exists()) {
-                const raw = snap.val();
-                notesData.characters = raw.characters || {};
-                notesData.potentialScenes = raw.potentialScenes || {};
-                notesData.nations = raw.nations || {};
-                notesData.religions = raw.religions || {};
-                notesData.worldbuilding = raw.worldbuilding || {};
-                notesData.overallStory = raw.overallStory || { content: '' };
-                notesData.timeline = raw.timeline || { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] };
+                const d = snap.val();
+                notesData.potentialScenes = d.potentialScenes || {};
+                notesData.characters = d.characters || {};
+                notesData.nations = d.nations || {};
+                notesData.religions = d.religions || {};
+                notesData.worldbuilding = d.worldbuilding || {};
             }
-            selectNotesCategory('potentialScenes');
-            renderNotesNav();
-
-            // Real-time listener
+            renderNav();
             db.ref('notes').on('value', snap => {
                 if (snap.exists()) {
-                    const raw = snap.val();
-                    notesData.characters = raw.characters || {};
-                    notesData.potentialScenes = raw.potentialScenes || {};
-                    notesData.nations = raw.nations || {};
-                    notesData.religions = raw.religions || {};
-                    notesData.worldbuilding = raw.worldbuilding || {};
-                    notesData.overallStory = raw.overallStory || { content: '' };
-                    notesData.timeline = raw.timeline || { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] };
+                    const d = snap.val();
+                    notesData.potentialScenes = d.potentialScenes || {};
+                    notesData.characters = d.characters || {};
+                    notesData.nations = d.nations || {};
+                    notesData.religions = d.religions || {};
+                    notesData.worldbuilding = d.worldbuilding || {};
                 }
-                renderNotesNav();
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if ((e.ctrlKey||e.metaKey)&&e.key==='s') {
-                    e.preventDefault();
-                    if (notesCurrentCategory==='timeline') saveTimelineEntries();
-                    else if (notesUnsavedFlag) saveCurrentNote();
-                }
-            });
-
-            document.querySelectorAll('.modal-overlay').forEach(el => {
-                el.addEventListener('click', function(evt) { if (evt.target===el) closeModal(el.id); });
+                renderNav();
             });
         })();
     </script>
