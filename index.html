@@ -44,11 +44,15 @@
             });
             document.getElementById('btn-enter').addEventListener('click', () => {
                 const pw = document.getElementById('pw-input').value;
-                if (pw === storedPassword) {
-                    window.location.href = 'editor.html';
-                } else {
-                    document.getElementById('pw-error').textContent = 'Incorrect password.';
-                }
+                // Load password from Firebase first
+                db.ref('meta/password').get().then(snap => {
+                    const storedPw = snap.exists() ? snap.val() : 'HambaHamba';
+                    if (pw === storedPw) {
+                        window.location.href = 'editor.html';
+                    } else {
+                        document.getElementById('pw-error').textContent = 'Incorrect password.';
+                    }
+                });
             });
             document.getElementById('pw-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') document.getElementById('btn-enter').click();
