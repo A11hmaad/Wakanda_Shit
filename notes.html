@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Tapestry – Notes</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div class="view active" style="display:flex; flex-direction:column; height:100%;">
+        <!-- Header -->
+        <div class="app-header">
+            <div style="display:flex;align-items:center;gap:0.8rem;">
+                <h1>Notes</h1>
+            </div>
+            <div class="header-actions">
+                <a href="editor.html" class="btn-sm">← Back to Editor</a>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="app-body">
+            <!-- Notes Sidebar -->
+            <div class="notes-sidebar" id="notes-sidebar">
+                <div class="notes-sidebar-header">
+                    Categories
+                    <button class="sidebar-add-btn" onclick="handleNotesAdd()" title="Add">＋</button>
+                </div>
+                <ul class="notes-nav-list" id="notes-nav-list"></ul>
+            </div>
+
+            <!-- Notes Main Area -->
+            <div class="notes-editor-area" id="notes-editor-area">
+                <!-- Empty state -->
+                <div class="empty-state" id="notes-empty"><p>Select a category to begin.</p></div>
+
+                <!-- Browser (card list) -->
+                <div class="notes-browser" id="notes-browser" style="display:none;">
+                    <div class="notes-browser-header">
+                        <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+                            <button class="btn-back" onclick="notesBrowserBack()">← Back</button>
+                            <h3 id="notes-browser-title">Items</h3>
+                        </div>
+                        <button class="btn-accent" id="notes-browser-add-btn" onclick="handleNotesBrowserAdd()">＋ Add</button>
+                    </div>
+                    <div id="notes-browser-content"></div>
+                </div>
+
+                <!-- Rich-text editor -->
+                <div id="notes-editor-content" style="display:none;flex-direction:column;flex:1;">
+                    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;flex-wrap:wrap;">
+                        <button class="btn-back" onclick="notesEditorBack()">← Back</button>
+                    </div>
+                    <input type="text" class="notes-editor-title" id="notes-editor-title" placeholder="Note title" />
+                    <div class="editor-toolbar">
+                        <button class="toolbar-btn" onmousedown="notesFormat(event,'bold')"><b>B</b></button>
+                        <button class="toolbar-btn" onmousedown="notesFormat(event,'italic')"><i>I</i></button>
+                        <button class="toolbar-btn" onmousedown="notesFormat(event,'underline')"><u>U</u></button>
+                    </div>
+                    <div id="notes-editor-body" contenteditable="true" class="notes-editor-body" oninput="notesUnsaved()" onkeydown="handleNotesEditorKey(event)"></div>
+                    <div class="editor-save-bar">
+                        <div class="save-status" id="notes-save-status">Unsaved changes</div>
+                        <button class="btn-accent" onclick="saveCurrentNote()">Save Note</button>
+                    </div>
+                </div>
+
+                <!-- Potential Chapters list -->
+                <div id="notes-pc-list" style="display:none;flex-direction:column;flex:1;">
+                    <div class="notes-browser-header">
+                        <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+                            <button class="btn-back" onclick="notesPcListBack()">← Back</button>
+                            <h3 id="notes-pc-list-title">Potential Chapters</h3>
+                        </div>
+                        <button class="btn-accent" onclick="openAddPotentialChapter()">＋ Add Chapter</button>
+                    </div>
+                    <div id="notes-pc-list-content"></div>
+                </div>
+
+                <!-- Timeline view -->
+                <div id="notes-timeline-view" style="display:none;flex-direction:column;flex:1;">
+                    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;flex-wrap:wrap;">
+                        <button class="btn-back" onclick="notesTimelineBack()">← Back</button>
+                    </div>
+                    <div class="timeline-era-setup">
+                        <label>Positive suffix <input type="text" id="timeline-era-positive" placeholder="e.g. AD" onchange="timelineUnsaved()" /></label>
+                        <label>Negative suffix <input type="text" id="timeline-era-negative" placeholder="e.g. BC" onchange="timelineUnsaved()" /></label>
+                        <button class="btn-accent" onclick="saveTimelineSettings()" style="height:fit-content;">Save Era</button>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
+                        <input type="number" id="timeline-new-year" placeholder="Year" style="width:80px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--sans);font-size:0.85rem;outline:none;min-width:60px;" />
+                        <input type="text" id="timeline-new-text" placeholder="Event description" style="flex:1;min-width:140px;padding:0.4rem 0.6rem;border:1px solid var(--rule);background:var(--paper);font-family:var(--serif);font-size:0.9rem;outline:none;" />
+                        <button class="btn-accent" onclick="addTimelineEntry()">Add</button>
+                    </div>
+                    <div class="timeline-entries" id="timeline-entries"></div>
+                    <div class="editor-save-bar">
+                        <div class="save-status" id="timeline-save-status"></div>
+                        <button class="btn-accent" onclick="saveTimelineEntries()">Save Timeline</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    <!-- Add Item (Character / Nation / Religion / Worldbuilding) -->
+    <div class="modal-overlay" id="modal-add-item">
+        <div class="modal">
+            <h2 id="modal-add-item-title">Add Item</h2>
+            <label>Name <input type="text" id="new-item-name" placeholder="Name" /></label>
+            <div class="error-msg" id="add-item-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-add-item')">Cancel</button>
+                <button class="btn-accent" id="modal-add-item-btn" onclick="addNotesItem()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Potential Chapter -->
+    <div class="modal-overlay" id="modal-add-potential-chapter">
+        <div class="modal">
+            <h2>Add Potential Chapter</h2>
+            <label>Title <input type="text" id="new-pc-title" placeholder="Chapter title" /></label>
+            <label>Serial (order) <input type="number" id="new-pc-serial" min="1" value="1" /></label>
+            <div class="error-msg" id="add-pc-error"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-add-potential-chapter')">Cancel</button>
+                <button class="btn-accent" onclick="addPotentialChapter()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Potential Chapter -->
+    <div class="modal-overlay" id="modal-edit-potential-chapter">
+        <div class="modal">
+            <h2>Edit Potential Chapter</h2>
+            <input type="hidden" id="edit-pc-key" />
+            <label>Title <input type="text" id="edit-pc-title" /></label>
+            <label>Serial (order) <input type="number" id="edit-pc-serial" min="1" /></label>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('modal-edit-potential-chapter')">Cancel</button>
+                <button class="btn-accent" onclick="savePotentialChapterMeta()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SCRIPTS ================= -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // ==================== NOTES COMPLETE LOGIC ====================
+
+        // ── Helpers ──
+        function hideAllNotesViews() {
+            document.getElementById('notes-empty').style.display = 'none';
+            document.getElementById('notes-browser').style.display = 'none';
+            document.getElementById('notes-editor-content').style.display = 'none';
+            document.getElementById('notes-pc-list').style.display = 'none';
+            document.getElementById('notes-timeline-view').style.display = 'none';
+        }
+
+        // ── Render sidebar navigation ──
+        function renderNotesNav() {
+            const nav = document.getElementById('notes-nav-list');
+            const psCount = Object.keys(notesData.potentialScenes).length;
+            const charCount = Object.keys(notesData.characters).length;
+            const nationCount = Object.keys(notesData.nations).length;
+            const religionCount = Object.keys(notesData.religions).length;
+            const wbCount = Object.keys(notesData.worldbuilding).length;
+
+            nav.innerHTML = `
+                <li class="notes-nav-category ${notesCurrentCategory==='potentialScenes'?'active':''}" onclick="selectNotesCategory('potentialScenes')"><span class="cat-icon">🎬</span> Potential Scenes <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${psCount}</span></li>
+                <li class="notes-nav-category ${notesCurrentCategory==='characters'?'active':''}" onclick="selectNotesCategory('characters')"><span class="cat-icon">👤</span> Characters <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${charCount}</span></li>
+                <li class="notes-nav-category ${notesCurrentCategory==='nations'?'active':''}" onclick="selectNotesCategory('nations')"><span class="cat-icon">🏴</span> Nations <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${nationCount}</span></li>
+                <li class="notes-nav-category ${notesCurrentCategory==='religions'?'active':''}" onclick="selectNotesCategory('religions')"><span class="cat-icon">☀️</span> Religions <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${religionCount}</span></li>
+                <li class="notes-nav-category ${notesCurrentCategory==='worldbuilding'?'active':''}" onclick="selectNotesCategory('worldbuilding')"><span class="cat-icon">📜</span> Worldbuilding <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);">${wbCount}</span></li>
+                <li class="notes-nav-category ${notesCurrentCategory==='overallStory'?'active':''}" onclick="selectNotesCategory('overallStory')"><span class="cat-icon">📖</span> Overall Story</li>
+                <li class="notes-nav-category ${notesCurrentCategory==='timeline'?'active':''}" onclick="selectNotesCategory('timeline')"><span class="cat-icon">⏳</span> Sort Timeline</li>`;
+
+            if (notesCurrentCategory === 'potentialScenes') {
+                const subList = document.createElement('ul');
+                subList.className = 'notes-sub-list';
+                Object.entries(notesData.potentialScenes).forEach(([psId, data]) => {
+                    const li = document.createElement('li');
+                    li.className = 'notes-sub-item' + (notesCurrentPsCharId === psId ? ' active' : '');
+                    li.innerHTML = `<span onclick="selectPotentialScenesCharacter('${psId}')" style="flex:1;">${escHtml(data.name || 'Unnamed')}</span><span class="sub-actions"><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialScenesCharacter('${psId}')">✕</button></span>`;
+                    subList.appendChild(li);
+                });
+                nav.appendChild(subList);
+            }
+        }
+
+        // ── Category selection ──
+        function selectNotesCategory(category) {
+            if (notesUnsavedFlag && notesCurrentCategory && notesCurrentCategory !== 'timeline') saveCurrentNoteSilent();
+            if (timelineUnsavedFlag && notesCurrentCategory === 'timeline') saveTimelineEntriesSilent();
+
+            notesCurrentCategory = category;
+            notesCurrentCharId = null;
+            notesCurrentPsCharId = null;
+            notesCurrentChId = null;
+            notesCurrentNationId = null;
+            notesCurrentReligionId = null;
+            notesCurrentWbId = null;
+            notesUnsavedFlag = false;
+            timelineUnsavedFlag = false;
+
+            hideAllNotesViews();
+            if (category === 'potentialScenes') showNotesBrowser('Potential Scenes', 'potentialScenes', notesData.potentialScenes);
+            else if (category === 'characters') showNotesBrowser('Characters', 'characters', notesData.characters);
+            else if (category === 'nations') showNotesBrowser('Nations', 'nations', notesData.nations);
+            else if (category === 'religions') showNotesBrowser('Religions', 'religions', notesData.religions);
+            else if (category === 'worldbuilding') showNotesBrowser('Worldbuilding', 'worldbuilding', notesData.worldbuilding);
+            else if (category === 'overallStory') loadOverallStoryEditor();
+            else if (category === 'timeline') loadTimelineView();
+            renderNotesNav();
+        }
+
+        // ── Browser (card grid) ──
+        function showNotesBrowser(title, dataKey, dataObj) {
+            hideAllNotesViews();
+            document.getElementById('notes-browser').style.display = 'flex';
+            document.getElementById('notes-browser-title').textContent = title;
+            notesAddMode = dataKey;
+            renderNotesCards(dataObj, dataKey);
+        }
+
+        function renderNotesCards(dataObj, dataKey) {
+            const container = document.getElementById('notes-browser-content');
+            const entries = Object.entries(dataObj);
+            if (!entries.length) {
+                container.innerHTML = `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No items yet. Click "+ Add" to create one.</p>`;
+            } else {
+                container.innerHTML = `<div class="notes-card-grid">${entries.map(([id,data])=>`<div class="notes-card" onclick="openNotesItem('${dataKey}','${id}')"><span class="notes-card-name">${escHtml(data.name||'Unnamed')}</span><span class="notes-card-actions"><button class="icon-btn danger" onclick="event.stopPropagation();deleteNotesItem('${dataKey}','${id}')">✕</button></span></div>`).join('')}</div>`;
+            }
+        }
+
+        // ── Add / open / delete items ──
+        function handleNotesBrowserAdd() {
+            if (notesAddMode === 'potentialScenes') openAddPotentialScenesCharacter();
+            else if (notesAddMode === 'characters') openAddItem('characters', 'Add Character');
+            else if (notesAddMode === 'nations') openAddItem('nations', 'Add Nation');
+            else if (notesAddMode === 'religions') openAddItem('religions', 'Add Religion');
+            else if (notesAddMode === 'worldbuilding') openAddItem('worldbuilding', 'Add Worldbuilding Reference');
+        }
+
+        function handleNotesAdd() { handleNotesBrowserAdd(); }
+
+        function openAddItem(mode, title) {
+            notesAddMode = mode;
+            document.getElementById('modal-add-item-title').textContent = title;
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('add-item-error').textContent = '';
+            openModal('modal-add-item');
+        }
+
+        async function addNotesItem() {
+            const name = document.getElementById('new-item-name').value.trim();
+            if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
+            const mode = notesAddMode;
+            closeModal('modal-add-item');
+            if (mode === 'characters') {
+                const id = db.ref('notes/characters').push().key;
+                notesData.characters[id] = { name, content: '' };
+                await db.ref('notes/characters/' + id).set({ name, content: '' });
+                notesCurrentCharId = id;
+                loadCharacterProfileEditor();
+            } else if (mode === 'nations') {
+                const id = db.ref('notes/nations').push().key;
+                notesData.nations[id] = { name, content: '' };
+                await db.ref('notes/nations/' + id).set({ name, content: '' });
+                notesCurrentNationId = id;
+                loadNationEditor();
+            } else if (mode === 'religions') {
+                const id = db.ref('notes/religions').push().key;
+                notesData.religions[id] = { name, content: '' };
+                await db.ref('notes/religions/' + id).set({ name, content: '' });
+                notesCurrentReligionId = id;
+                loadReligionEditor();
+            } else if (mode === 'worldbuilding') {
+                const id = db.ref('notes/worldbuilding').push().key;
+                notesData.worldbuilding[id] = { name, content: '' };
+                await db.ref('notes/worldbuilding/' + id).set({ name, content: '' });
+                notesCurrentWbId = id;
+                loadWorldbuildingEditor();
+            }
+            renderNotesNav();
+        }
+
+        function openNotesItem(dataKey, id) {
+            if (dataKey === 'potentialScenes') selectPotentialScenesCharacter(id);
+            else if (dataKey === 'characters') { notesCurrentCharId = id; loadCharacterProfileEditor(); renderNotesNav(); }
+            else if (dataKey === 'nations') { notesCurrentNationId = id; loadNationEditor(); renderNotesNav(); }
+            else if (dataKey === 'religions') { notesCurrentReligionId = id; loadReligionEditor(); renderNotesNav(); }
+            else if (dataKey === 'worldbuilding') { notesCurrentWbId = id; loadWorldbuildingEditor(); renderNotesNav(); }
+        }
+
+        async function deleteNotesItem(dataKey, id) {
+            if (!confirm('Delete this item?')) return;
+            const pathMap = { characters:'notes/characters', potentialScenes:'notes/potentialScenes', nations:'notes/nations', religions:'notes/religions', worldbuilding:'notes/worldbuilding' };
+            delete notesData[dataKey][id];
+            await db.ref(pathMap[dataKey] + '/' + id).remove();
+            if (dataKey === 'potentialScenes' && notesCurrentPsCharId === id) { notesCurrentPsCharId = null; notesCurrentChId = null; }
+            else if (dataKey === 'characters' && notesCurrentCharId === id) { notesCurrentCharId = null; }
+            else if (dataKey === 'nations' && notesCurrentNationId === id) { notesCurrentNationId = null; }
+            else if (dataKey === 'religions' && notesCurrentReligionId === id) { notesCurrentReligionId = null; }
+            else if (dataKey === 'worldbuilding' && notesCurrentWbId === id) { notesCurrentWbId = null; }
+            hideAllNotesViews();
+            selectNotesCategory(notesCurrentCategory);
+            renderNotesNav();
+        }
+
+        // ── Potential Scenes ──
+        function openAddPotentialScenesCharacter() {
+            notesAddMode = 'potentialScenes';
+            document.getElementById('modal-add-item-title').textContent = 'Add Character';
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('add-item-error').textContent = '';
+            openModal('modal-add-item');
+            document.getElementById('modal-add-item-btn').onclick = async function() {
+                const name = document.getElementById('new-item-name').value.trim();
+                if (!name) { document.getElementById('add-item-error').textContent = 'Name required.'; return; }
+                const id = db.ref('notes/potentialScenes').push().key;
+                notesData.potentialScenes[id] = { name, chapters: {} };
+                await db.ref('notes/potentialScenes/' + id).set({ name, chapters: {} });
+                closeModal('modal-add-item');
+                document.getElementById('modal-add-item-btn').onclick = addNotesItem;  // reset
+                notesCurrentPsCharId = id;
+                notesCurrentChId = null;
+                showPotentialChaptersList();
+                renderNotesNav();
+            };
+        }
+
+        function selectPotentialScenesCharacter(psId) {
+            notesCurrentPsCharId = psId;
+            notesCurrentChId = null;
+            notesUnsavedFlag = false;
+            showPotentialChaptersList();
+            renderNotesNav();
+        }
+
+        async function deletePotentialScenesCharacter(psId) {
+            if (!confirm('Delete this character and all their potential chapters?')) return;
+            delete notesData.potentialScenes[psId];
+            await db.ref('notes/potentialScenes/' + psId).remove();
+            if (notesCurrentPsCharId === psId) { notesCurrentPsCharId = null; notesCurrentChId = null; }
+            hideAllNotesViews();
+            selectNotesCategory('potentialScenes');
+            renderNotesNav();
+        }
+
+        function showPotentialChaptersList() {
+            if (!notesCurrentPsCharId) return;
+            hideAllNotesViews();
+            const psData = notesData.potentialScenes[notesCurrentPsCharId];
+            if (!psData) return;
+            document.getElementById('notes-pc-list').style.display = 'flex';
+            document.getElementById('notes-pc-list-title').textContent = (psData.name || 'Character') + ' — Chapters';
+            const container = document.getElementById('notes-pc-list-content');
+            const chapters = psData.chapters || {};
+            const sorted = Object.entries(chapters).sort((a,b) => (a[1].serial||0) - (b[1].serial||0));
+            if (!sorted.length) {
+                container.innerHTML = `<p style="color:var(--muted);font-style:italic;text-align:center;padding:2rem;">No potential chapters yet. Click "+ Add Chapter" to create one.</p>`;
+            } else {
+                container.innerHTML = `<div style="display:flex;flex-direction:column;gap:0.5rem;">${sorted.map(([chId,chData])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1rem;border:1px solid var(--rule);cursor:pointer;transition:border-color 0.15s;flex-wrap:wrap;gap:0.4rem;" onclick="openPotentialChapterEditor('${notesCurrentPsCharId}','${chId}')"><span style="font-family:var(--serif);font-size:1rem;color:var(--ink);">${chData.serial||''}. ${escHtml(chData.title||'Untitled')}</span><span style="display:flex;gap:0.3rem;"><button class="icon-btn" onclick="event.stopPropagation();openEditPotentialChapter('${notesCurrentPsCharId}','${chId}')">✎</button><button class="icon-btn danger" onclick="event.stopPropagation();deletePotentialChapter('${notesCurrentPsCharId}','${chId}')">✕</button></span></div>`).join('')}</div>`;
+            }
+        }
+
+        function openPotentialChapterEditor(psId, chId) {
+            notesCurrentPsCharId = psId;
+            notesCurrentChId = chId;
+            notesUnsavedFlag = false;
+            const chData = notesData.potentialScenes[psId]?.chapters?.[chId];
+            if (!chData) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = chData.title || '';
+            document.getElementById('notes-editor-body').innerHTML = chData.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+        }
+
+        function openAddPotentialChapter() {
+            if (!notesCurrentPsCharId) return;
+            const psData = notesData.potentialScenes[notesCurrentPsCharId];
+            const chCount = psData && psData.chapters ? Object.keys(psData.chapters).length : 0;
+            document.getElementById('new-pc-title').value = '';
+            document.getElementById('new-pc-serial').value = chCount + 1;
+            document.getElementById('add-pc-error').textContent = '';
+            openModal('modal-add-potential-chapter');
+        }
+
+        async function addPotentialChapter() {
+            if (!notesCurrentPsCharId) return;
+            const title = document.getElementById('new-pc-title').value.trim();
+            const serial = parseInt(document.getElementById('new-pc-serial').value) || 1;
+            if (!title) { document.getElementById('add-pc-error').textContent = 'Title required.'; return; }
+            const chId = db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters').push().key;
+            if (!notesData.potentialScenes[notesCurrentPsCharId].chapters) notesData.potentialScenes[notesCurrentPsCharId].chapters = {};
+            notesData.potentialScenes[notesCurrentPsCharId].chapters[chId] = { title, serial, content: '' };
+            await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + chId).set({ title, serial, content: '' });
+            closeModal('modal-add-potential-chapter');
+            notesCurrentChId = chId;
+            openPotentialChapterEditor(notesCurrentPsCharId, chId);
+            renderNotesNav();
+        }
+
+        function openEditPotentialChapter(psId, chId) {
+            const chData = notesData.potentialScenes[psId]?.chapters?.[chId];
+            if (!chData) return;
+            document.getElementById('edit-pc-key').value = chId;
+            document.getElementById('edit-pc-key').dataset.psId = psId;
+            document.getElementById('edit-pc-title').value = chData.title || '';
+            document.getElementById('edit-pc-serial').value = chData.serial || 1;
+            openModal('modal-edit-potential-chapter');
+        }
+
+        async function savePotentialChapterMeta() {
+            const chId = document.getElementById('edit-pc-key').value;
+            const psId = document.getElementById('edit-pc-key').dataset.psId;
+            const title = document.getElementById('edit-pc-title').value.trim() || 'Untitled';
+            const serial = parseInt(document.getElementById('edit-pc-serial').value) || 1;
+            if (!notesData.potentialScenes[psId].chapters[chId]) return;
+            notesData.potentialScenes[psId].chapters[chId].title = title;
+            notesData.potentialScenes[psId].chapters[chId].serial = serial;
+            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).update({ title, serial });
+            if (notesCurrentChId === chId) document.getElementById('notes-editor-title').value = title;
+            closeModal('modal-edit-potential-chapter');
+            showPotentialChaptersList();
+            renderNotesNav();
+        }
+
+        async function deletePotentialChapter(psId, chId) {
+            if (!confirm('Delete this potential chapter?')) return;
+            delete notesData.potentialScenes[psId].chapters[chId];
+            await db.ref('notes/potentialScenes/' + psId + '/chapters/' + chId).remove();
+            if (notesCurrentChId === chId) { notesCurrentChId = null; hideAllNotesViews(); showPotentialChaptersList(); }
+            else showPotentialChaptersList();
+            renderNotesNav();
+        }
+
+        // ── Editors for Character / Nation / Religion / Worldbuilding ──
+        function loadCharacterProfileEditor() {
+            if (!notesCurrentCharId) return;
+            const data = notesData.characters[notesCurrentCharId];
+            if (!data) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = data.name || '';
+            document.getElementById('notes-editor-body').innerHTML = data.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+            notesUnsavedFlag = false;
+        }
+        function loadNationEditor() {
+            if (!notesCurrentNationId) return;
+            const data = notesData.nations[notesCurrentNationId];
+            if (!data) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = data.name || '';
+            document.getElementById('notes-editor-body').innerHTML = data.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+            notesUnsavedFlag = false;
+        }
+        function loadReligionEditor() {
+            if (!notesCurrentReligionId) return;
+            const data = notesData.religions[notesCurrentReligionId];
+            if (!data) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = data.name || '';
+            document.getElementById('notes-editor-body').innerHTML = data.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+            notesUnsavedFlag = false;
+        }
+        function loadWorldbuildingEditor() {
+            if (!notesCurrentWbId) return;
+            const data = notesData.worldbuilding[notesCurrentWbId];
+            if (!data) return;
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = data.name || '';
+            document.getElementById('notes-editor-body').innerHTML = data.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+            notesUnsavedFlag = false;
+        }
+        function loadOverallStoryEditor() {
+            hideAllNotesViews();
+            document.getElementById('notes-editor-content').style.display = 'flex';
+            document.getElementById('notes-editor-title').value = 'Overall Story';
+            document.getElementById('notes-editor-title').readOnly = true;
+            document.getElementById('notes-editor-body').innerHTML = notesData.overallStory.content || '';
+            document.getElementById('notes-save-status').textContent = 'Saved';
+            notesUnsavedFlag = false;
+        }
+
+        // ── Timeline ──
+        function loadTimelineView() {
+            hideAllNotesViews();
+            document.getElementById('notes-timeline-view').style.display = 'flex';
+            document.getElementById('timeline-era-positive').value = notesData.timeline.positiveSuffix || 'AD';
+            document.getElementById('timeline-era-negative').value = notesData.timeline.negativeSuffix || 'BC';
+            renderTimelineEntries();
+            timelineUnsavedFlag = false;
+            document.getElementById('timeline-save-status').textContent = '';
+        }
+
+        function formatTimelineYear(year) {
+            const posSuffix = notesData.timeline.positiveSuffix || 'AD';
+            const negSuffix = notesData.timeline.negativeSuffix || 'BC';
+            if (year >= 0) return year + ' ' + posSuffix;
+            else return Math.abs(year) + ' ' + negSuffix;
+        }
+
+        function renderTimelineEntries() {
+            const container = document.getElementById('timeline-entries');
+            const entries = notesData.timeline.entries || [];
+            const sorted = [...entries].sort((a,b) => (a.year||0) - (b.year||0));
+            container.innerHTML = '';
+            sorted.forEach((entry, idx) => {
+                const div = document.createElement('div');
+                div.className = 'timeline-entry';
+                div.innerHTML = `<span class="timeline-entry-year">${formatTimelineYear(entry.year||0)}</span><input type="text" class="timeline-entry-text" value="${escHtml(entry.text||'')}" onchange="updateTimelineEntry(${idx},this.value)" /><span class="timeline-entry-actions"><button class="icon-btn danger" onclick="deleteTimelineEntry(${idx})">✕</button></span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function addTimelineEntry() {
+            const year = parseInt(document.getElementById('timeline-new-year').value);
+            const text = document.getElementById('timeline-new-text').value.trim();
+            if (isNaN(year) || !text) return;
+            if (!notesData.timeline.entries) notesData.timeline.entries = [];
+            notesData.timeline.entries.push({ year, text });
+            document.getElementById('timeline-new-year').value = '';
+            document.getElementById('timeline-new-text').value = '';
+            timelineUnsavedFlag = true;
+            document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
+            renderTimelineEntries();
+        }
+
+        function updateTimelineEntry(idx, newText) {
+            const entries = notesData.timeline.entries || [];
+            const sorted = [...entries].sort((a,b) => (a.year||0) - (b.year||0));
+            const entry = sorted[idx];
+            const origIdx = entries.indexOf(entry);
+            if (origIdx >= 0) notesData.timeline.entries[origIdx].text = newText;
+            timelineUnsavedFlag = true;
+            document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
+        }
+
+        function deleteTimelineEntry(idx) {
+            const entries = notesData.timeline.entries || [];
+            const sorted = [...entries].sort((a,b) => (a.year||0) - (b.year||0));
+            const entry = sorted[idx];
+            const origIdx = entries.indexOf(entry);
+            if (origIdx >= 0) notesData.timeline.entries.splice(origIdx, 1);
+            timelineUnsavedFlag = true;
+            document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
+            renderTimelineEntries();
+        }
+
+        async function saveTimelineSettings() {
+            const posSuffix = document.getElementById('timeline-era-positive').value.trim() || 'AD';
+            const negSuffix = document.getElementById('timeline-era-negative').value.trim() || 'BC';
+            notesData.timeline.positiveSuffix = posSuffix;
+            notesData.timeline.negativeSuffix = negSuffix;
+            await db.ref('notes/timeline/positiveSuffix').set(posSuffix);
+            await db.ref('notes/timeline/negativeSuffix').set(negSuffix);
+            renderTimelineEntries();
+            document.getElementById('timeline-save-status').textContent = 'Era saved ✓';
+            setTimeout(() => { if (document.getElementById('timeline-save-status').textContent === 'Era saved ✓') document.getElementById('timeline-save-status').textContent = ''; }, 2000);
+        }
+
+        async function saveTimelineEntries() {
+            await db.ref('notes/timeline/entries').set(notesData.timeline.entries || []);
+            timelineUnsavedFlag = false;
+            document.getElementById('timeline-save-status').textContent = 'Timeline saved ✓';
+            setTimeout(() => { if (document.getElementById('timeline-save-status').textContent === 'Timeline saved ✓') document.getElementById('timeline-save-status').textContent = ''; }, 2000);
+        }
+
+        async function saveTimelineEntriesSilent() {
+            await db.ref('notes/timeline/entries').set(notesData.timeline.entries || []);
+            timelineUnsavedFlag = false;
+        }
+
+        function timelineUnsaved() {
+            timelineUnsavedFlag = true;
+            document.getElementById('timeline-save-status').textContent = 'Unsaved changes';
+        }
+
+        // ── Note formatting & saving ──
+        function notesFormat(evt, cmd) { evt.preventDefault(); document.execCommand(cmd, false, null); }
+        function notesUnsaved() { notesUnsavedFlag = true; document.getElementById('notes-save-status').textContent = 'Unsaved changes'; }
+        function handleNotesEditorKey(evt) {
+            if ((evt.ctrlKey || evt.metaKey) && ['b','i','u'].includes(evt.key.toLowerCase())) { /* native behaviour */ }
+            if (!(evt.ctrlKey || evt.metaKey) || evt.key !== 's') notesUnsaved();
+        }
+
+        async function saveCurrentNote() {
+            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
+            const content = document.getElementById('notes-editor-body').innerHTML;
+            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                notesData.characters[notesCurrentCharId].name = title;
+                notesData.characters[notesCurrentCharId].content = content;
+                await db.ref('notes/characters/' + notesCurrentCharId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
+                const chObj = notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId];
+                if (chObj) { chObj.title = title; chObj.content = content; }
+                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
+            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
+                notesData.nations[notesCurrentNationId].name = title;
+                notesData.nations[notesCurrentNationId].content = content;
+                await db.ref('notes/nations/' + notesCurrentNationId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
+                notesData.religions[notesCurrentReligionId].name = title;
+                notesData.religions[notesCurrentReligionId].content = content;
+                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
+                notesData.worldbuilding[notesCurrentWbId].name = title;
+                notesData.worldbuilding[notesCurrentWbId].content = content;
+                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'overallStory') {
+                notesData.overallStory.content = content;
+                await db.ref('notes/overallStory/content').set(content);
+            }
+            notesUnsavedFlag = false;
+            document.getElementById('notes-save-status').textContent = 'Saved ✓';
+            renderNotesNav();
+        }
+
+        async function saveCurrentNoteSilent() {
+            const title = document.getElementById('notes-editor-title').value.trim() || 'Untitled';
+            const content = document.getElementById('notes-editor-body').innerHTML;
+            if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                notesData.characters[notesCurrentCharId].name = title;
+                notesData.characters[notesCurrentCharId].content = content;
+                await db.ref('notes/characters/' + notesCurrentCharId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId && notesCurrentChId) {
+                const chObj = notesData.potentialScenes[notesCurrentPsCharId].chapters[notesCurrentChId];
+                if (chObj) { chObj.title = title; chObj.content = content; }
+                await db.ref('notes/potentialScenes/' + notesCurrentPsCharId + '/chapters/' + notesCurrentChId).update({ title, content });
+            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
+                notesData.nations[notesCurrentNationId].name = title;
+                notesData.nations[notesCurrentNationId].content = content;
+                await db.ref('notes/nations/' + notesCurrentNationId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
+                notesData.religions[notesCurrentReligionId].name = title;
+                notesData.religions[notesCurrentReligionId].content = content;
+                await db.ref('notes/religions/' + notesCurrentReligionId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
+                notesData.worldbuilding[notesCurrentWbId].name = title;
+                notesData.worldbuilding[notesCurrentWbId].content = content;
+                await db.ref('notes/worldbuilding/' + notesCurrentWbId).update({ name: title, content });
+            } else if (notesCurrentCategory === 'overallStory') {
+                notesData.overallStory.content = content;
+                await db.ref('notes/overallStory/content').set(content);
+            }
+            notesUnsavedFlag = false;
+        }
+
+        // ── Back navigation ──
+        function notesBrowserBack() {
+            if (notesCurrentCategory) selectNotesCategory(notesCurrentCategory);
+        }
+        function notesEditorBack() {
+            if (notesCurrentCategory === 'potentialScenes' && notesCurrentChId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentChId = null;
+                showPotentialChaptersList();
+            } else if (notesCurrentCategory === 'potentialScenes' && notesCurrentPsCharId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentPsCharId = null;
+                selectNotesCategory('potentialScenes');
+            } else if (notesCurrentCategory === 'characters' && notesCurrentCharId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentCharId = null;
+                selectNotesCategory('characters');
+            } else if (notesCurrentCategory === 'nations' && notesCurrentNationId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentNationId = null;
+                selectNotesCategory('nations');
+            } else if (notesCurrentCategory === 'religions' && notesCurrentReligionId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentReligionId = null;
+                selectNotesCategory('religions');
+            } else if (notesCurrentCategory === 'worldbuilding' && notesCurrentWbId) {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                notesCurrentWbId = null;
+                selectNotesCategory('worldbuilding');
+            } else if (notesCurrentCategory === 'overallStory') {
+                if (notesUnsavedFlag) saveCurrentNoteSilent();
+                selectNotesCategory('overallStory');
+            }
+        }
+        function notesPcListBack() {
+            if (notesUnsavedFlag) saveCurrentNoteSilent();
+            notesCurrentPsCharId = null;
+            notesCurrentChId = null;
+            selectNotesCategory('potentialScenes');
+        }
+        function notesTimelineBack() {
+            if (timelineUnsavedFlag) saveTimelineEntriesSilent();
+            selectNotesCategory('timeline');
+        }
+
+        // ── Initialisation ──
+        (async function() {
+            // Load notes data from Firebase
+            db.ref('notes').on('value', snap => {
+                if (snap.exists()) {
+                    const d = snap.val();
+                    notesData.characters = d.characters || {};
+                    notesData.potentialScenes = d.potentialScenes || {};
+                    notesData.nations = d.nations || {};
+                    notesData.religions = d.religions || {};
+                    notesData.worldbuilding = d.worldbuilding || {};
+                    notesData.overallStory = d.overallStory || { content: '' };
+                    notesData.timeline = d.timeline || { positiveSuffix: 'AD', negativeSuffix: 'BC', entries: [] };
+                    if (!notesData.timeline.entries) notesData.timeline.entries = [];
+                }
+                renderNotesNav();
+            });
+
+            // Select default category if none
+            if (!notesCurrentCategory) selectNotesCategory('potentialScenes');
+
+            // Modal helpers
+            window.openModal = function(id) { document.getElementById(id).classList.add('open'); };
+            window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+            document.querySelectorAll('.modal-overlay').forEach(el => {
+                el.addEventListener('click', evt => { if (evt.target === el) closeModal(el.id); });
+            });
+
+            // Global Ctrl+S for saving notes
+            document.addEventListener('keydown', function(evt) {
+                if ((evt.ctrlKey || evt.metaKey) && evt.key === 's') {
+                    evt.preventDefault();
+                    if (notesCurrentCategory === 'timeline') {
+                        saveTimelineEntries();
+                    } else if (notesUnsavedFlag) {
+                        saveCurrentNote();
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
