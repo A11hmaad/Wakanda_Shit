@@ -185,8 +185,6 @@ body {
     transition: all 0.15s;
     text-decoration: none;
     display: inline-block;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
 .btn-sm:hover {
     border-color: var(--accent);
@@ -368,8 +366,6 @@ body {
     line-height: 1;
     border-radius: 2px;
     transition: color 0.15s, background 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
 .icon-btn:hover {
     color: var(--accent);
@@ -432,8 +428,6 @@ body {
     border-radius: 2px;
     font-family: var(--sans);
     transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
 .toolbar-btn:hover {
     border-color: var(--rule);
@@ -948,13 +942,8 @@ body {
     transition: background 0.15s;
     letter-spacing: 0.04em;
     border-left: 3px solid transparent;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
 }
 .notes-nav-category:hover { background: rgba(92, 61, 46, 0.06); }
-.notes-nav-category:active { background: rgba(92, 61, 46, 0.12); }
 .notes-nav-category.active {
     background: rgba(92, 61, 46, 0.08);
     border-left-color: var(--accent);
@@ -972,13 +961,8 @@ body {
     align-items: center;
     gap: 0.4rem;
     transition: color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
 }
 .notes-sub-item:hover { color: var(--accent); }
-.notes-sub-item:active { color: var(--accent); }
 .notes-sub-item.active { color: var(--accent); font-weight: 600; }
 .notes-sub-item .sub-actions {
     margin-left: auto;
@@ -1065,15 +1049,10 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
 .notes-card:hover {
     border-color: var(--accent);
     box-shadow: var(--shadow-sm);
-}
-.notes-card:active {
-    border-color: var(--accent);
 }
 .notes-card-name {
     font-family: var(--serif);
@@ -1095,8 +1074,6 @@ body {
     color: var(--muted);
     transition: all 0.15s;
     white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
 .btn-back:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -1173,84 +1150,56 @@ body {
 }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
     .main-pane, .reader-content-wrap {
-        padding: 1.5rem 1rem;
+        padding: 2rem 1.2rem;
     }
     .app-header {
-        padding: 0.8rem 1rem;
+        padding: 0.9rem 1rem;
     }
     .app-header h1 {
         font-size: 1.2rem;
     }
     #reader-homepage {
-        padding: 2rem 1rem 2rem;
+        padding: 3rem 1.5rem 3rem;
     }
     .chapter-nav-btn {
         max-width: 100%;
     }
-    .notes-container {
+
+    /* ── NOTES MOBILE FIX ── */
+    /* notes.html uses .app-body directly (not .notes-container),
+       so we must make .app-body stack vertically on mobile too */
+    .app-body {
         flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
+
     .notes-sidebar {
         width: 100%;
         height: auto;
-        max-height: none;
-        flex-shrink: 0;
+        max-height: 40vh;
         border-right: none;
-        border-bottom: 2px solid var(--rule);
-        display: block !important;
-        position: relative;
-        z-index: 1;
+        border-bottom: 1px solid var(--rule);
+        flex-shrink: 0;
+        /* prevent sidebar from collapsing when nav list grows */
+        overflow-y: auto;
     }
-    .notes-sidebar-header {
-        position: sticky;
-        top: 0;
-        background: var(--ui-bg2);
-        z-index: 2;
-    }
-    .notes-nav-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0;
-        padding: 0;
-    }
-    .notes-nav-category {
-        flex: 0 0 auto;
-        padding: 0.5rem 0.8rem;
-        border-left: none;
-        border-bottom: 2px solid transparent;
-        font-size: 0.7rem;
-        white-space: nowrap;
-    }
-    .notes-nav-category.active {
-        border-left-color: transparent;
-        border-bottom-color: var(--accent);
-        background: transparent;
-    }
-    .notes-sub-list {
-        display: flex;
-        flex-wrap: wrap;
-        padding-left: 0.5rem;
-        gap: 0;
-    }
-    .notes-sub-item {
-        padding: 0.35rem 0.6rem;
-        font-size: 0.75rem;
-        white-space: nowrap;
-    }
+
+    /* Ensure the editor area actually takes up remaining space */
     .notes-editor-area {
-        padding: 1rem;
+        flex: 1;
+        min-height: 0;
+        padding: 1.2rem;
+        overflow-y: auto;
+    }
+
+    .notes-container {
+        flex-direction: column;
     }
     .notes-card-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .notes-browser-header {
-        flex-direction: row;
-        align-items: center;
-    }
-    .notes-browser-header h3 {
-        font-size: 1.2rem;
+        grid-template-columns: 1fr;
     }
     .timeline-era-setup {
         flex-direction: column;
@@ -1274,27 +1223,15 @@ body {
     .timeline-entry-actions {
         align-self: flex-end;
     }
+    .notes-browser-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
     .btn-sm {
         padding: 0.35rem 0.6rem;
         font-size: 0.68rem;
     }
     .header-actions {
         gap: 0.3rem;
-    }
-    .notes-card {
-        padding: 0.7rem;
-    }
-    .notes-card-name {
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .notes-card-grid {
-        grid-template-columns: 1fr;
-    }
-    .notes-nav-category {
-        font-size: 0.65rem;
-        padding: 0.4rem 0.6rem;
     }
 }
